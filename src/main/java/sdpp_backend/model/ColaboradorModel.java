@@ -7,6 +7,7 @@ import java.time.LocalDate;
 @Table(name = "colaborador")
 public class ColaboradorModel {
 
+    // Relacionamentos
     @ManyToOne
     @JoinColumn(name = "cargo_id", nullable = false)
     private CargoModel cargo;
@@ -14,6 +15,10 @@ public class ColaboradorModel {
     @ManyToOne
     @JoinColumn(name = "departamento_id", nullable = false)
     private DepartamentoModel departamento;
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id", unique = true)
+    private UsuarioModel usuario;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -87,5 +92,13 @@ public class ColaboradorModel {
 
     public void setDepartamento(DepartamentoModel departamento) {
         this.departamento = departamento;
+    }
+
+    public UsuarioModel getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(UsuarioModel usuario) {
+        this.usuario = usuario;
     }
 }

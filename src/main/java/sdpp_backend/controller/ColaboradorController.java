@@ -33,19 +33,12 @@ public class ColaboradorController {
     }
 
     @PutMapping("/{id}")
-    public ColaboradorModel atualizar(
-            @PathVariable Long id,
-            @RequestBody ColaboradorModel colaborador) {
+public ColaboradorModel atualizar(
+        @PathVariable Long id,
+        @RequestBody ColaboradorModel colaborador) {
 
-        ColaboradorModel existente = service.buscarPorId(id);
-
-        existente.setNome(colaborador.getNome());
-        existente.setEmail(colaborador.getEmail());
-        existente.setDataAdmissao(colaborador.getDataAdmissao());
-        existente.setAtivo(colaborador.getAtivo());
-
-        return service.salvar(existente);
-    }
+    return service.atualizar(id, colaborador);
+}
 
     @DeleteMapping("/{id}")
     public void excluir(@PathVariable Long id) {

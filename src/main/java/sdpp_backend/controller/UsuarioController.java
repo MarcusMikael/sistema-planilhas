@@ -36,13 +36,7 @@ public class UsuarioController {
             @PathVariable Long id,
             @RequestBody UsuarioModel usuario) {
 
-        UsuarioModel existente = service.buscarPorId(id);
-
-        existente.setEmail(usuario.getEmail());
-        existente.setSenha(usuario.getSenha());
-        existente.setAtivo(usuario.getAtivo());
-
-        return service.salvar(existente);
+        return service.atualizar(id, usuario);
     }
 
     @DeleteMapping("/{id}")

@@ -2,6 +2,8 @@ package sdpp_backend.service;
 
 import sdpp_backend.model.UsuarioModel;
 import sdpp_backend.repository.UsuarioRepository;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +12,14 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository repository) {
+    public UsuarioService(
+            UsuarioRepository repository,
+            PasswordEncoder passwordEncoder) {
+
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UsuarioModel> listarTodos() {
@@ -25,14 +32,32 @@ public class UsuarioService {
     }
 
     public UsuarioModel salvar(UsuarioModel usuario) {
+
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+
         return repository.save(usuario);
     }
 
-    public void excluir(Long id) {
-        if (!repository.existsById(id)) {
-            throw new RuntimeException("Usuário não encontrado");
+    public UsuarioModel atualizar(Long id, UsuarioModel usuario) {
+
+        UsuarioModel existente = buscarPorId(id);
+
+        existente.setEmail(usuario.getEmail());
+        existente.setAtivo(usuario.getAtivo());
+
+        if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
+            existente.setSenha(passwordEncoder.encode(usuario.getSenha()));
         }
 
-        repository.deleteById(id);
+        return repository.save(existente);
+    }
+
+    public void excluir(Long id) {
+
+        UsuarioModel usuario = buscarPorId(id);
+
+        usuario.setAtivo(false);
+
+        repository.save(usuario);
     }
 }
