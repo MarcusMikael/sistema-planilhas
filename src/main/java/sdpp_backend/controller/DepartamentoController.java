@@ -50,5 +50,3 @@ public class DepartamentoController {
         service.excluir(id);
     }
 }
-
-

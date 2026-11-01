@@ -7,6 +7,14 @@ import java.time.LocalDate;
 @Table(name = "colaborador")
 public class ColaboradorModel {
 
+    @ManyToOne
+    @JoinColumn(name = "cargo_id", nullable = false)
+    private CargoModel cargo;
+
+    @ManyToOne
+    @JoinColumn(name = "departamento_id", nullable = false)
+    private DepartamentoModel departamento;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -64,5 +72,20 @@ public class ColaboradorModel {
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
     }
-}
 
+    public CargoModel getCargo() {
+        return cargo;
+    }
+
+    public void setCargo(CargoModel cargo) {
+        this.cargo = cargo;
+    }
+
+    public DepartamentoModel getDepartamento() {
+        return departamento;
+    }
+
+    public void setDepartamento(DepartamentoModel departamento) {
+        this.departamento = departamento;
+    }
+}
