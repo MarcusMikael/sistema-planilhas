@@ -1,6 +1,8 @@
 
 package sdpp_backend.service;
 
+import sdpp_backend.exception.RecursoNaoEncontradoException;
+import sdpp_backend.exception.RegraNegocioException;
 import sdpp_backend.model.ColaboradorModel;
 import sdpp_backend.repository.CargoRepository;
 import sdpp_backend.repository.ColaboradorRepository;
@@ -37,7 +39,8 @@ public class ColaboradorService {
 
     public ColaboradorModel buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Colaborador não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Colaborador não encontrado"));
     }
 
     public ColaboradorModel salvar(ColaboradorModel colaborador) {
@@ -63,7 +66,8 @@ public class ColaboradorService {
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             if (!usuario.getAtivo()) {
-                throw new RuntimeException("Não é permitido vincular um usuário inativo");
+                throw new RegraNegocioException(
+                        "Não é permitido vincular um usuário inativo");
             }
 
             colaborador.setUsuario(usuario);
@@ -108,7 +112,8 @@ public class ColaboradorService {
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             if (!usuario.getAtivo()) {
-                throw new RuntimeException("Não é permitido vincular um usuário inativo");
+                throw new RegraNegocioException(
+                        "Não é permitido vincular um usuário inativo");
             }
 
             existente.setUsuario(usuario);
