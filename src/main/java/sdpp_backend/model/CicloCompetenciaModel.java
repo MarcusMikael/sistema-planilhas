@@ -3,7 +3,8 @@ package sdpp_backend.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "ciclo_competencia")
+@Table(name = "ciclo_competencia",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"ciclo_id", "competencia_id"}))
 public class CicloCompetenciaModel {
 
     @Id
@@ -17,9 +18,6 @@ public class CicloCompetenciaModel {
     @ManyToOne
     @JoinColumn(name = "competencia_id", nullable = false)
     private CompetenciaModel competencia;
-
-    @Column(nullable = false)
-    private Double peso;
 
     public CicloCompetenciaModel() {
     }
@@ -47,13 +45,4 @@ public class CicloCompetenciaModel {
     public void setCompetencia(CompetenciaModel competencia) {
         this.competencia = competencia;
     }
-
-    public Double getPeso() {
-        return peso;
-    }
-
-    public void setPeso(Double peso) {
-        this.peso = peso;
-    }
-
 }

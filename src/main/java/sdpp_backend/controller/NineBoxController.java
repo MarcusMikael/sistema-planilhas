@@ -2,13 +2,19 @@ package sdpp_backend.controller;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import sdpp_backend.model.NineBoxModel;
+import jakarta.validation.Valid;
+import sdpp_backend.dto.AvaliacaoDTOs.NineBoxItemResponse;
+import sdpp_backend.dto.AvaliacaoDTOs.NineBoxRequest;
+import sdpp_backend.dto.AvaliacaoDTOs.NineBoxResponse;
+import sdpp_backend.dto.AvaliacaoDTOs.QuadranteRequest;
+import sdpp_backend.dto.AvaliacaoDTOs.QuadranteResponse;
 import sdpp_backend.service.NineBoxService;
 
 @RestController
-@RequestMapping("/nine-box")
+@RequestMapping("/api/nine-box")
 public class NineBoxController {
 
     private final NineBoxService service;
@@ -18,29 +24,23 @@ public class NineBoxController {
     }
 
     @GetMapping
-    public List<NineBoxModel> listarTodos() {
-        return service.listarTodos();
+    public NineBoxResponse matriz(@RequestParam Long cicloId, @RequestParam(required = false) Long departamentoId) {
+        return service.matriz(cicloId, departamentoId);
     }
 
-    @GetMapping("/{id}")
-    public NineBoxModel buscarPorId(@PathVariable Long id) {
-        return service.buscarPorId(id);
+    @PutMapping
+    public NineBoxItemResponse registrar(@Valid @RequestBody NineBoxRequest req) {
+        return service.registrar(req);
     }
 
-    @PostMapping
-    public NineBoxModel salvar(@RequestBody NineBoxModel nineBox) {
-        return service.salvar(nineBox);
+    @GetMapping("/quadrantes")
+    public List<QuadranteResponse> quadrantes() {
+        return service.quadrantes();
     }
 
-    @PutMapping("/{id}")
-    public NineBoxModel atualizar(
-            @PathVariable Long id,
-            @RequestBody NineBoxModel nineBox) {
-        return service.atualizar(id, nineBox);
-    }
-
-    @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        service.excluir(id);
+    @PutMapping("/quadrantes/{id}")
+    @PreAuthorize("hasRole('RH')")
+    public QuadranteResponse atualizarQuadrante(@PathVariable Long id, @Valid @RequestBody QuadranteRequest req) {
+        return service.atualizarQuadrante(id, req);
     }
 }

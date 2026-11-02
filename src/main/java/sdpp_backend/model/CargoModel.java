@@ -1,4 +1,3 @@
-
 package sdpp_backend.model;
 
 import jakarta.persistence.*;
@@ -43,4 +42,3 @@ public class CargoModel {
         this.descricao = descricao;
     }
 }
-

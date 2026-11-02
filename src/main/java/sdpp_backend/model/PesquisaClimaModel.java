@@ -2,6 +2,7 @@ package sdpp_backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import sdpp_backend.model.enums.StatusPesquisa;
 
 @Entity
 @Table(name = "pesquisa_clima")
@@ -14,14 +15,15 @@ public class PesquisaClimaModel {
     @Column(nullable = false)
     private String titulo;
 
-    @Column(name = "data_inicio")
+    @Column(name = "data_inicio", nullable = false)
     private LocalDate dataInicio;
 
-    @Column(name = "data_fim")
+    @Column(name = "data_fim", nullable = false)
     private LocalDate dataFim;
 
-    @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusPesquisa status = StatusPesquisa.RASCUNHO;
 
     public PesquisaClimaModel() {
     }
@@ -58,12 +60,11 @@ public class PesquisaClimaModel {
         this.dataFim = dataFim;
     }
 
-    public String getStatus() {
+    public StatusPesquisa getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusPesquisa status) {
         this.status = status;
     }
-
 }

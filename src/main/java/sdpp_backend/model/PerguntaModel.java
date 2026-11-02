@@ -1,6 +1,7 @@
 package sdpp_backend.model;
 
 import jakarta.persistence.*;
+import sdpp_backend.model.enums.TipoPergunta;
 
 @Entity
 @Table(name = "pergunta")
@@ -14,14 +15,15 @@ public class PerguntaModel {
     @JoinColumn(name = "pesquisa_id", nullable = false)
     private PesquisaClimaModel pesquisa;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String texto;
 
-    @Column(nullable = false)
-    private String tipo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private TipoPergunta tipo;
 
     @Column(nullable = false)
-    private Boolean obrigatoria;
+    private Boolean obrigatoria = true;
 
     @Column(nullable = false)
     private Integer ordem;
@@ -53,11 +55,11 @@ public class PerguntaModel {
         this.texto = texto;
     }
 
-    public String getTipo() {
+    public TipoPergunta getTipo() {
         return tipo;
     }
 
-    public void setTipo(String tipo) {
+    public void setTipo(TipoPergunta tipo) {
         this.tipo = tipo;
     }
 
@@ -76,5 +78,4 @@ public class PerguntaModel {
     public void setOrdem(Integer ordem) {
         this.ordem = ordem;
     }
-
 }

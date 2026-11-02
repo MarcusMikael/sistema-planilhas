@@ -1,9 +1,11 @@
 package sdpp_backend.model;
 
 import jakarta.persistence.*;
+import sdpp_backend.model.enums.Nivel;
 
 @Entity
-@Table(name = "nine_box")
+@Table(name = "nine_box",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"colaborador_id", "ciclo_id"}))
 public class NineBoxModel {
 
     @Id
@@ -18,14 +20,25 @@ public class NineBoxModel {
     @JoinColumn(name = "ciclo_id", nullable = false)
     private CicloAvaliacaoModel ciclo;
 
-    @Column(nullable = false)
-    private String desempenho;
+    // Eixos distintos (RN-03); qualquer um nulo deixa a classificação pendente
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private Nivel desempenho;
 
-    @Column(nullable = false)
-    private String potencial;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private Nivel potencial;
 
-    @Column(nullable = false)
-    private String faixa;
+    @ManyToOne
+    @JoinColumn(name = "quadrante_id")
+    private QuadranteModel quadrante;
+
+    @Column(length = 2000)
+    private String observacoes;
+
+    @ManyToOne
+    @JoinColumn(name = "registrado_por_id")
+    private ColaboradorModel registradoPor;
 
     public NineBoxModel() {
     }
@@ -54,28 +67,43 @@ public class NineBoxModel {
         this.ciclo = ciclo;
     }
 
-    public String getDesempenho() {
+    public Nivel getDesempenho() {
         return desempenho;
     }
 
-    public void setDesempenho(String desempenho) {
+    public void setDesempenho(Nivel desempenho) {
         this.desempenho = desempenho;
     }
 
-    public String getPotencial() {
+    public Nivel getPotencial() {
         return potencial;
     }
 
-    public void setPotencial(String potencial) {
+    public void setPotencial(Nivel potencial) {
         this.potencial = potencial;
     }
 
-    public String getFaixa() {
-        return faixa;
+    public QuadranteModel getQuadrante() {
+        return quadrante;
     }
 
-    public void setFaixa(String faixa) {
-        this.faixa = faixa;
+    public void setQuadrante(QuadranteModel quadrante) {
+        this.quadrante = quadrante;
     }
 
+    public String getObservacoes() {
+        return observacoes;
+    }
+
+    public void setObservacoes(String observacoes) {
+        this.observacoes = observacoes;
+    }
+
+    public ColaboradorModel getRegistradoPor() {
+        return registradoPor;
+    }
+
+    public void setRegistradoPor(ColaboradorModel registradoPor) {
+        this.registradoPor = registradoPor;
+    }
 }

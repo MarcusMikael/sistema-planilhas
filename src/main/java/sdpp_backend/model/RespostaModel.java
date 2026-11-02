@@ -1,37 +1,43 @@
 package sdpp_backend.model;
 
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.util.UUID;
 
+import jakarta.persistence.*;
+
+/**
+ * Resposta anônima: sem colaborador, sem horário e sem código de sessão (RN-06, G3).
+ * O id é um UUID aleatório para que a ordem de gravação não permita ligar a resposta à participação.
+ */
 @Entity
 @Table(name = "resposta")
 public class RespostaModel {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "pergunta_id", nullable = false)
     private PerguntaModel pergunta;
 
-    @Column(name = "codigo_sessao", nullable = false)
-    private String codigoSessao;
+    // Departamento copiado do cadastro, usado só para agregação por setor
+    private String setor;
 
-    @Column(nullable = false)
-    private String valor;
+    // Perguntas de escala (1 a 5)
+    private Integer valor;
 
-    @Column(name = "respondida_em")
-    private LocalDateTime respondidaEm;
+    // Perguntas abertas
+    @Column(length = 2000)
+    private String texto;
 
     public RespostaModel() {
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -43,28 +49,27 @@ public class RespostaModel {
         this.pergunta = pergunta;
     }
 
-    public String getCodigoSessao() {
-        return codigoSessao;
+    public String getSetor() {
+        return setor;
     }
 
-    public void setCodigoSessao(String codigoSessao) {
-        this.codigoSessao = codigoSessao;
+    public void setSetor(String setor) {
+        this.setor = setor;
     }
 
-    public String getValor() {
+    public Integer getValor() {
         return valor;
     }
 
-    public void setValor(String valor) {
+    public void setValor(Integer valor) {
         this.valor = valor;
     }
 
-    public LocalDateTime getRespondidaEm() {
-        return respondidaEm;
+    public String getTexto() {
+        return texto;
     }
 
-    public void setRespondidaEm(LocalDateTime respondidaEm) {
-        this.respondidaEm = respondidaEm;
+    public void setTexto(String texto) {
+        this.texto = texto;
     }
-
 }

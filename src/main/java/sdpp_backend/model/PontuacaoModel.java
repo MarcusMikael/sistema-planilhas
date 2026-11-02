@@ -3,7 +3,8 @@ package sdpp_backend.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "pontuacao")
+@Table(name = "pontuacao",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"avaliacao_id", "ciclo_competencia_id"}))
 public class PontuacaoModel {
 
     @Id
@@ -18,8 +19,10 @@ public class PontuacaoModel {
     @JoinColumn(name = "ciclo_competencia_id", nullable = false)
     private CicloCompetenciaModel cicloCompetencia;
 
-    private Double nota;
+    // Nulo = ainda não pontuado; nunca é tratado como zero (RN-02)
+    private Integer nota;
 
+    @Column(length = 1000)
     private String comentario;
 
     public PontuacaoModel() {
@@ -49,11 +52,11 @@ public class PontuacaoModel {
         this.cicloCompetencia = cicloCompetencia;
     }
 
-    public Double getNota() {
+    public Integer getNota() {
         return nota;
     }
 
-    public void setNota(Double nota) {
+    public void setNota(Integer nota) {
         this.nota = nota;
     }
 
@@ -64,5 +67,4 @@ public class PontuacaoModel {
     public void setComentario(String comentario) {
         this.comentario = comentario;
     }
-
 }

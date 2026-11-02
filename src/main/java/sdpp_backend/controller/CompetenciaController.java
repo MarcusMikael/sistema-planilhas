@@ -1,13 +1,18 @@
 package sdpp_backend.controller;
 
-import sdpp_backend.model.CompetenciaModel;
-import sdpp_backend.service.CompetenciaService;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import sdpp_backend.dto.CadastroDTOs.CompetenciaRequest;
+import sdpp_backend.dto.CadastroDTOs.CompetenciaResponse;
+import sdpp_backend.service.CompetenciaService;
+
 @RestController
-@RequestMapping("/competencias")
+@RequestMapping("/api/competencias")
 public class CompetenciaController {
 
     private final CompetenciaService service;
@@ -17,30 +22,27 @@ public class CompetenciaController {
     }
 
     @GetMapping
-    public List<CompetenciaModel> listarTodos() {
+    public List<CompetenciaResponse> listarTodos() {
         return service.listarTodos();
     }
 
-    @GetMapping("/{id}")
-    public CompetenciaModel buscarPorId(@PathVariable Long id) {
-        return service.buscarPorId(id);
-    }
-
     @PostMapping
-    public CompetenciaModel salvar(@RequestBody CompetenciaModel competencia) {
-        return service.salvar(competencia);
-    }
-
-    @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        service.excluir(id);
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('RH')")
+    public CompetenciaResponse salvar(@Valid @RequestBody CompetenciaRequest req) {
+        return service.salvar(null, req);
     }
 
     @PutMapping("/{id}")
-    public CompetenciaModel atualizar(
-            @PathVariable Long id,
-            @RequestBody CompetenciaModel competencia) {
+    @PreAuthorize("hasRole('RH')")
+    public CompetenciaResponse atualizar(@PathVariable Long id, @Valid @RequestBody CompetenciaRequest req) {
+        return service.salvar(id, req);
+    }
 
-        return service.atualizar(id, competencia);
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasRole('RH')")
+    public void excluir(@PathVariable Long id) {
+        service.excluir(id);
     }
 }
