@@ -4,11 +4,15 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.*;
 
-import sdpp_backend.model.AvaliacaoModel;
+import jakarta.validation.Valid;
+import sdpp_backend.dto.AvaliacaoDTOs.AbrirAvaliacaoRequest;
+import sdpp_backend.dto.AvaliacaoDTOs.AvaliacaoResponse;
+import sdpp_backend.dto.AvaliacaoDTOs.NotasRequest;
+import sdpp_backend.dto.AvaliacaoDTOs.PendenciaResponse;
 import sdpp_backend.service.AvaliacaoService;
 
 @RestController
-@RequestMapping("/avaliacoes")
+@RequestMapping("/api/avaliacoes")
 public class AvaliacaoController {
 
     private final AvaliacaoService service;
@@ -18,29 +22,33 @@ public class AvaliacaoController {
     }
 
     @GetMapping
-    public List<AvaliacaoModel> listarTodos() {
-        return service.listarTodos();
+    public List<AvaliacaoResponse> listar(@RequestParam Long cicloId) {
+        return service.listar(cicloId);
+    }
+
+    @GetMapping("/pendentes")
+    public List<PendenciaResponse> pendentes() {
+        return service.pendentes();
     }
 
     @GetMapping("/{id}")
-    public AvaliacaoModel buscarPorId(@PathVariable Long id) {
+    public AvaliacaoResponse buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id);
     }
 
+    /** Abre a autoavaliação ou a avaliação do gestor; se já existir, devolve a existente. */
     @PostMapping
-    public AvaliacaoModel salvar(@RequestBody AvaliacaoModel avaliacao) {
-        return service.salvar(avaliacao);
+    public AvaliacaoResponse abrir(@Valid @RequestBody AbrirAvaliacaoRequest req) {
+        return service.abrir(req);
     }
 
-    @PutMapping("/{id}")
-    public AvaliacaoModel atualizar(
-            @PathVariable Long id,
-            @RequestBody AvaliacaoModel avaliacao) {
-        return service.atualizar(id, avaliacao);
+    @PutMapping("/{id}/notas")
+    public AvaliacaoResponse salvarNotas(@PathVariable Long id, @Valid @RequestBody NotasRequest req) {
+        return service.salvarNotas(id, req);
     }
 
-    @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        service.excluir(id);
+    @PostMapping("/{id}/concluir")
+    public AvaliacaoResponse concluir(@PathVariable Long id) {
+        return service.concluir(id);
     }
 }

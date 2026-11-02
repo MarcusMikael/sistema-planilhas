@@ -2,6 +2,7 @@ package sdpp_backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import sdpp_backend.model.enums.StatusCiclo;
 
 @Entity
 @Table(name = "ciclo_avaliacao")
@@ -20,8 +21,9 @@ public class CicloAvaliacaoModel {
     @Column(name = "data_fim", nullable = false)
     private LocalDate dataFim;
 
-    @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private StatusCiclo status = StatusCiclo.RASCUNHO;
 
     public CicloAvaliacaoModel() {
     }
@@ -58,12 +60,11 @@ public class CicloAvaliacaoModel {
         this.dataFim = dataFim;
     }
 
-    public String getStatus() {
+    public StatusCiclo getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusCiclo status) {
         this.status = status;
     }
-
 }

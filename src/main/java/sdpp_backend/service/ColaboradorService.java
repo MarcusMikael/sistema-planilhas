@@ -1,150 +1,125 @@
-
 package sdpp_backend.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import sdpp_backend.dto.CadastroDTOs.ColaboradorRequest;
+import sdpp_backend.dto.CadastroDTOs.ColaboradorResponse;
+import sdpp_backend.exception.ConflitoException;
 import sdpp_backend.exception.RecursoNaoEncontradoException;
 import sdpp_backend.exception.RegraNegocioException;
 import sdpp_backend.model.ColaboradorModel;
 import sdpp_backend.repository.CargoRepository;
 import sdpp_backend.repository.ColaboradorRepository;
 import sdpp_backend.repository.DepartamentoRepository;
-import sdpp_backend.repository.UsuarioRepository;
+import sdpp_backend.security.AcessoService;
 
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
+/** Cadastro de colaboradores (RF-COL-01, RF-COL-02). Escrita só pelo RH; leitura conforme a equipe. */
 @Service
 public class ColaboradorService {
 
     private final ColaboradorRepository repository;
     private final CargoRepository cargoRepository;
     private final DepartamentoRepository departamentoRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final AcessoService acesso;
 
-    public ColaboradorService(
-            ColaboradorRepository repository,
-            CargoRepository cargoRepository,
-            DepartamentoRepository departamentoRepository,
-            UsuarioRepository usuarioRepository) {
-
+    public ColaboradorService(ColaboradorRepository repository, CargoRepository cargoRepository,
+                              DepartamentoRepository departamentoRepository, AcessoService acesso) {
         this.repository = repository;
         this.cargoRepository = cargoRepository;
         this.departamentoRepository = departamentoRepository;
-        this.usuarioRepository = usuarioRepository;
+        this.acesso = acesso;
     }
 
-    public List<ColaboradorModel> listarTodos() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ColaboradorResponse> listar() {
+        return acesso.colaboradoresVisiveis(acesso.atual()).stream().map(ColaboradorResponse::de).toList();
     }
 
-    public ColaboradorModel buscarPorId(Long id) {
+    /** Lista simplificada para escolher o gestor responsável no formulário do RH. */
+    @Transactional(readOnly = true)
+    public List<ColaboradorResponse> equipe() {
+        return acesso.equipe(acesso.atual()).stream().map(ColaboradorResponse::de).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ColaboradorResponse buscarPorId(Long id) {
+        ColaboradorModel c = buscar(id);
+        acesso.exigirPodeVer(acesso.atual(), c);
+        return ColaboradorResponse.de(c);
+    }
+
+    @Transactional
+    public ColaboradorResponse salvar(ColaboradorRequest req) {
+        String email = req.email().trim().toLowerCase();
+        if (repository.existsByEmailIgnoreCase(email)) {
+            throw new ConflitoException("Já existe um colaborador com este e-mail.");
+        }
+        ColaboradorModel c = new ColaboradorModel();
+        preencher(c, req, email);
+        return ColaboradorResponse.de(repository.save(c));
+    }
+
+    @Transactional
+    public ColaboradorResponse atualizar(Long id, ColaboradorRequest req) {
+        ColaboradorModel c = buscar(id);
+        String email = req.email().trim().toLowerCase();
+        if (!c.getEmail().equalsIgnoreCase(email) && repository.existsByEmailIgnoreCase(email)) {
+            throw new ConflitoException("Já existe um colaborador com este e-mail.");
+        }
+        preencher(c, req, email);
+        return ColaboradorResponse.de(c);
+    }
+
+    /**
+     * Exclusão lógica: o colaborador é desativado para preservar avaliações, PDIs e histórico.
+     * A conta de acesso vinculada também é desativada.
+     */
+    @Transactional
+    public void desativar(Long id) {
+        ColaboradorModel c = buscar(id);
+        c.setAtivo(false);
+        if (c.getUsuario() != null) {
+            c.getUsuario().setAtivo(false);
+        }
+    }
+
+    private void preencher(ColaboradorModel c, ColaboradorRequest req, String email) {
+        c.setNome(req.nome().trim());
+        c.setEmail(email);
+        c.setDataAdmissao(req.dataAdmissao());
+        c.setAtivo(req.ativo() == null || req.ativo());
+        c.setCargo(cargoRepository.findById(req.cargoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Cargo não encontrado.")));
+        c.setDepartamento(departamentoRepository.findById(req.departamentoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Departamento não encontrado.")));
+        c.setGestor(req.gestorId() == null ? null : validarGestor(c, req.gestorId()));
+        // Colaborador inativo não acessa o sistema
+        if (!c.getAtivo() && c.getUsuario() != null) {
+            c.getUsuario().setAtivo(false);
+        }
+    }
+
+    /** O gestor não pode ser o próprio colaborador nem gerar ciclo na hierarquia. */
+    private ColaboradorModel validarGestor(ColaboradorModel c, Long gestorId) {
+        ColaboradorModel gestor = repository.findById(gestorId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Gestor não encontrado."));
+        boolean gestorAlterado = c.getGestor() == null || !c.getGestor().getId().equals(gestorId);
+        if (gestorAlterado && !Boolean.TRUE.equals(gestor.getAtivo())) {
+            throw new RegraNegocioException("O gestor responsável precisa estar ativo.");
+        }
+        for (ColaboradorModel g = gestor; g != null; g = g.getGestor()) {
+            if (c.getId() != null && c.getId().equals(g.getId())) {
+                throw new RegraNegocioException("Gestor inválido: criaria um ciclo na hierarquia.");
+            }
+        }
+        return gestor;
+    }
+
+    private ColaboradorModel buscar(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RecursoNaoEncontradoException(
-                        "Colaborador não encontrado"));
-    }
-
-    public ColaboradorModel salvar(ColaboradorModel colaborador) {
-
-        // Busca o cargo
-        Long cargoId = colaborador.getCargo().getId();
-
-        var cargo = cargoRepository.findById(cargoId)
-                .orElseThrow(() -> new RuntimeException("Cargo não encontrado"));
-
-        // Busca o departamento
-        Long departamentoId = colaborador.getDepartamento().getId();
-
-        var departamento = departamentoRepository.findById(departamentoId)
-                .orElseThrow(() -> new RuntimeException("Departamento não encontrado"));
-
-        // Busca o usuário, caso tenha sido informado
-        if (colaborador.getUsuario() != null) {
-
-            Long usuarioId = colaborador.getUsuario().getId();
-
-            var usuario = usuarioRepository.findById(usuarioId)
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-            if (!usuario.getAtivo()) {
-                throw new RegraNegocioException(
-                        "Não é permitido vincular um usuário inativo");
-            }
-
-            colaborador.setUsuario(usuario);
-        }
-
-        // Busca o gestor, caso tenha sido informado
-        if (colaborador.getGestor() != null) {
-            Long gestorId = colaborador.getGestor().getId();
-
-            var gestor = repository.findById(gestorId)
-                    .orElseThrow(() -> new RuntimeException("Gestor não encontrado"));
-
-            colaborador.setGestor(gestor);
-        }
-
-        // Associa os registros encontrados
-        colaborador.setCargo(cargo);
-        colaborador.setDepartamento(departamento);
-
-        // Salva o colaborador
-        return repository.save(colaborador);
-    }
-
-    public ColaboradorModel atualizar(Long id, ColaboradorModel colaborador) {
-
-        ColaboradorModel existente = buscarPorId(id);
-
-        existente.setNome(colaborador.getNome());
-        existente.setEmail(colaborador.getEmail());
-        existente.setDataAdmissao(colaborador.getDataAdmissao());
-        existente.setAtivo(colaborador.getAtivo());
-
-        // Atualiza o cargo
-        if (colaborador.getCargo() != null) {
-            var cargo = cargoRepository.findById(colaborador.getCargo().getId())
-                    .orElseThrow(() -> new RuntimeException("Cargo não encontrado"));
-
-            existente.setCargo(cargo);
-        }
-
-        // Atualiza o departamento
-        if (colaborador.getDepartamento() != null) {
-            var departamento = departamentoRepository.findById(colaborador.getDepartamento().getId())
-                    .orElseThrow(() -> new RuntimeException("Departamento não encontrado"));
-
-            existente.setDepartamento(departamento);
-        }
-
-        // Atualiza o usuário
-        if (colaborador.getUsuario() != null) {
-            var usuario = usuarioRepository.findById(colaborador.getUsuario().getId())
-                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-
-            if (!usuario.getAtivo()) {
-                throw new RegraNegocioException(
-                        "Não é permitido vincular um usuário inativo");
-            }
-
-            existente.setUsuario(usuario);
-        }
-
-        // Atualiza o gestor
-        if (colaborador.getGestor() != null) {
-            var gestor = repository.findById(colaborador.getGestor().getId())
-                    .orElseThrow(() -> new RuntimeException("Gestor não encontrado"));
-
-            existente.setGestor(gestor);
-        }
-
-        return repository.save(existente);
-    }
-
-    public void excluir(Long id) {
-        if (!repository.existsById(id)) {
-            throw new RuntimeException("Colaborador não encontrado");
-        }
-
-        repository.deleteById(id);
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Colaborador não encontrado."));
     }
 }

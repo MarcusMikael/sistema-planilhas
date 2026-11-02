@@ -7,23 +7,6 @@ import java.time.LocalDate;
 @Table(name = "colaborador")
 public class ColaboradorModel {
 
-    // Relacionamentos
-    @ManyToOne
-    @JoinColumn(name = "cargo_id", nullable = false)
-    private CargoModel cargo;
-
-    @ManyToOne
-    @JoinColumn(name = "departamento_id", nullable = false)
-    private DepartamentoModel departamento;
-
-    @OneToOne
-    @JoinColumn(name = "usuario_id", unique = true)
-    private UsuarioModel usuario;
-
-    @ManyToOne
-    @JoinColumn(name = "gestor_id")
-    private ColaboradorModel gestor;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,10 +17,28 @@ public class ColaboradorModel {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "data_admissao", nullable = false)
     private LocalDate dataAdmissao;
 
     @Column(nullable = false)
     private Boolean ativo = true;
+
+    @ManyToOne
+    @JoinColumn(name = "cargo_id", nullable = false)
+    private CargoModel cargo;
+
+    @ManyToOne
+    @JoinColumn(name = "departamento_id", nullable = false)
+    private DepartamentoModel departamento;
+
+    // Gestor responsável: define a equipe (PRE-03, RF-SEG-02)
+    @ManyToOne
+    @JoinColumn(name = "gestor_id")
+    private ColaboradorModel gestor;
+
+    @OneToOne
+    @JoinColumn(name = "usuario_id", unique = true)
+    private UsuarioModel usuario;
 
     public ColaboradorModel() {
     }
@@ -98,19 +99,19 @@ public class ColaboradorModel {
         this.departamento = departamento;
     }
 
-    public UsuarioModel getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(UsuarioModel usuario) {
-        this.usuario = usuario;
-    }
-
     public ColaboradorModel getGestor() {
         return gestor;
     }
 
     public void setGestor(ColaboradorModel gestor) {
         this.gestor = gestor;
+    }
+
+    public UsuarioModel getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(UsuarioModel usuario) {
+        this.usuario = usuario;
     }
 }

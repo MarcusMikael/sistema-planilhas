@@ -33,4 +33,9 @@ build/
 .vscode/
 
 ### Configurações locais ###
-src/main/resources/application.properties
+src/main/resources/application-local.properties
+/data/
+/frontend/node_modules/
+/frontend/dist/
+.env
+.env.local

@@ -2,9 +2,12 @@ package sdpp_backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import sdpp_backend.model.enums.StatusAvaliacao;
+import sdpp_backend.model.enums.TipoAvaliacao;
 
 @Entity
-@Table(name = "avaliacao")
+@Table(name = "avaliacao",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"colaborador_id", "ciclo_id", "tipo"}))
 public class AvaliacaoModel {
 
     @Id
@@ -23,11 +26,13 @@ public class AvaliacaoModel {
     @JoinColumn(name = "avaliador_id", nullable = false)
     private ColaboradorModel avaliador;
 
-    @Column(nullable = false)
-    private String tipo;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TipoAvaliacao tipo;
 
-    @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusAvaliacao status = StatusAvaliacao.EM_ANDAMENTO;
 
     @Column(name = "data_avaliacao")
     private LocalDate dataAvaliacao;
@@ -67,19 +72,19 @@ public class AvaliacaoModel {
         this.avaliador = avaliador;
     }
 
-    public String getTipo() {
+    public TipoAvaliacao getTipo() {
         return tipo;
     }
 
-    public void setTipo(String tipo) {
+    public void setTipo(TipoAvaliacao tipo) {
         this.tipo = tipo;
     }
 
-    public String getStatus() {
+    public StatusAvaliacao getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StatusAvaliacao status) {
         this.status = status;
     }
 
@@ -90,6 +95,4 @@ public class AvaliacaoModel {
     public void setDataAvaliacao(LocalDate dataAvaliacao) {
         this.dataAvaliacao = dataAvaliacao;
     }
-
-    
 }

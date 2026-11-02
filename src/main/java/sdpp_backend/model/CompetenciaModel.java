@@ -1,6 +1,7 @@
 package sdpp_backend.model;
 
 import jakarta.persistence.*;
+import sdpp_backend.model.enums.TipoCompetencia;
 
 @Entity
 @Table(name = "competencia")
@@ -10,16 +11,18 @@ public class CompetenciaModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String nome;
 
+    @Column(length = 1000)
     private String descricao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TipoCompetencia tipo;
 
     @Column(nullable = false)
     private Boolean ativo = true;
-
-    @Column(nullable = false)
-    private String tipo;
 
     public CompetenciaModel() {
     }
@@ -48,6 +51,14 @@ public class CompetenciaModel {
         this.descricao = descricao;
     }
 
+    public TipoCompetencia getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(TipoCompetencia tipo) {
+        this.tipo = tipo;
+    }
+
     public Boolean getAtivo() {
         return ativo;
     }
@@ -55,13 +66,4 @@ public class CompetenciaModel {
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
     }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
-
 }

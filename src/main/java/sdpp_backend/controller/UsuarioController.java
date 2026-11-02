@@ -1,13 +1,19 @@
 package sdpp_backend.controller;
 
-import sdpp_backend.model.UsuarioModel;
-import sdpp_backend.service.UsuarioService;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import sdpp_backend.dto.CadastroDTOs.UsuarioRequest;
+import sdpp_backend.dto.CadastroDTOs.UsuarioResponse;
+import sdpp_backend.service.UsuarioService;
+
 @RestController
-@RequestMapping("/usuarios")
+@RequestMapping("/api/usuarios")
+@PreAuthorize("hasRole('RH')")
 public class UsuarioController {
 
     private final UsuarioService service;
@@ -17,30 +23,30 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<UsuarioModel> listarTodos() {
+    public List<UsuarioResponse> listarTodos() {
         return service.listarTodos();
     }
 
     @GetMapping("/{id}")
-    public UsuarioModel buscarPorId(@PathVariable Long id) {
+    public UsuarioResponse buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id);
     }
 
     @PostMapping
-    public UsuarioModel salvar(@RequestBody UsuarioModel usuario) {
-        return service.salvar(usuario);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UsuarioResponse salvar(@Valid @RequestBody UsuarioRequest req) {
+        return service.salvar(req);
     }
 
     @PutMapping("/{id}")
-    public UsuarioModel atualizar(
-            @PathVariable Long id,
-            @RequestBody UsuarioModel usuario) {
-
-        return service.atualizar(id, usuario);
+    public UsuarioResponse atualizar(@PathVariable Long id, @Valid @RequestBody UsuarioRequest req) {
+        return service.atualizar(id, req);
     }
 
+    /** Desativa a conta (exclusão lógica). */
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        service.excluir(id);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void desativar(@PathVariable Long id) {
+        service.desativar(id);
     }
 }
