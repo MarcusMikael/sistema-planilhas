@@ -35,4 +35,12 @@ public class CompetenciaController {
     public void excluir(@PathVariable Long id) {
         service.excluir(id);
     }
+
+    @PutMapping("/{id}")
+    public CompetenciaModel atualizar(
+            @PathVariable Long id,
+            @RequestBody CompetenciaModel competencia) {
+
+        return service.atualizar(id, competencia);
+    }
 }

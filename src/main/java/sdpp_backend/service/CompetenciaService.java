@@ -27,6 +27,19 @@ public class CompetenciaService {
         return repository.save(competencia);
     }
 
+    public CompetenciaModel atualizar(Long id, CompetenciaModel competencia) {
+
+        CompetenciaModel existente = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Competência não encontrada"));
+
+        existente.setNome(competencia.getNome());
+        existente.setDescricao(competencia.getDescricao());
+        existente.setTipo(competencia.getTipo());
+        existente.setAtivo(competencia.getAtivo());
+
+        return repository.save(existente);
+    }
+
     public void excluir(Long id) {
         repository.deleteById(id);
     }

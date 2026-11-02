@@ -20,6 +20,10 @@ public class ColaboradorModel {
     @JoinColumn(name = "usuario_id", unique = true)
     private UsuarioModel usuario;
 
+    @ManyToOne
+    @JoinColumn(name = "gestor_id")
+    private ColaboradorModel gestor;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -100,5 +104,13 @@ public class ColaboradorModel {
 
     public void setUsuario(UsuarioModel usuario) {
         this.usuario = usuario;
+    }
+
+    public ColaboradorModel getGestor() {
+        return gestor;
+    }
+
+    public void setGestor(ColaboradorModel gestor) {
+        this.gestor = gestor;
     }
 }

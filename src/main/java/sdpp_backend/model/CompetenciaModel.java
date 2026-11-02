@@ -18,6 +18,9 @@ public class CompetenciaModel {
     @Column(nullable = false)
     private Boolean ativo = true;
 
+    @Column(nullable = false)
+    private String tipo;
+
     public CompetenciaModel() {
     }
 
@@ -51,6 +54,14 @@ public class CompetenciaModel {
 
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
     }
 
 }

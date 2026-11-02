@@ -73,6 +73,16 @@ public class ColaboradorService {
             colaborador.setUsuario(usuario);
         }
 
+        // Busca o gestor, caso tenha sido informado
+        if (colaborador.getGestor() != null) {
+            Long gestorId = colaborador.getGestor().getId();
+
+            var gestor = repository.findById(gestorId)
+                    .orElseThrow(() -> new RuntimeException("Gestor não encontrado"));
+
+            colaborador.setGestor(gestor);
+        }
+
         // Associa os registros encontrados
         colaborador.setCargo(cargo);
         colaborador.setDepartamento(departamento);
@@ -117,6 +127,14 @@ public class ColaboradorService {
             }
 
             existente.setUsuario(usuario);
+        }
+
+        // Atualiza o gestor
+        if (colaborador.getGestor() != null) {
+            var gestor = repository.findById(colaborador.getGestor().getId())
+                    .orElseThrow(() -> new RuntimeException("Gestor não encontrado"));
+
+            existente.setGestor(gestor);
         }
 
         return repository.save(existente);
