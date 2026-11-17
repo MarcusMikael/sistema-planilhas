@@ -11,23 +11,18 @@
 	<groupId>br.com.sdpp</groupId>
 	<artifactId>sdpp-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
-	<url/>
+	<name>SDPP – Sistema de Desenvolvimento e Performance de Pessoas</name>
+	<description>Backend (API REST) do SDPP: avaliação de desempenho por competências, Matriz Nine Box, PDI e pesquisa de clima. Autores e equipes em EQUIPES.md.</description>
+	<url>https://github.com/MarcusMikael/sistema-planilhas</url>
 	<licenses>
 		<license>
 			<name>MIT License</name>
 			<url>https://opensource.org/licenses/MIT</url>
 		</license>
 	</licenses>
-	<developers>
-		<developer/>
-	</developers>
 	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
+		<connection>scm:git:https://github.com/MarcusMikael/sistema-planilhas.git</connection>
+		<url>https://github.com/MarcusMikael/sistema-planilhas</url>
 	</scm>
 	<properties>
 		<java.version>21</java.version>
