@@ -1,5 +1,9 @@
 # SDPP – Sistema de Desenvolvimento e Performance de Pessoas
 
+[![CI](https://github.com/MarcusMikael/sistema-planilhas/actions/workflows/ci.yml/badge.svg)](https://github.com/MarcusMikael/sistema-planilhas/actions/workflows/ci.yml)
+
+**Acesse o sistema:** https://sdpp-frontend-eta.vercel.app (contas em [Contas de demonstração](#contas-de-demonstração))
+
 Projeto da disciplina **Gestão de Pessoas** (Engenharia de Software – UNIFSA, 2026), orientado pelo
 professor Aluysio Fonseca. Segue o **Documento de Requisitos de Software (DRS v0.2)** e o **Documento de
 Arquitetura (SWEBOK)** da equipe.
@@ -8,12 +12,15 @@ Arquitetura (SWEBOK)** da equipe.
 
 - [Sobre o projeto](#sobre-o-projeto)
 - [Como executar](#como-executar)
-- [Testes](#testes)
-- [Estrutura do repositório](#estrutura-do-repositório)
-- [Produção e deploy](#produção-e-deploy)
+- [Contas de demonstração](#contas-de-demonstração)
+- [Testes e integração contínua](#testes-e-integração-contínua)
+- [Arquitetura](#arquitetura)
+- [Segurança](#segurança)
+- [Deploy](#deploy)
 - [Referência da API](#referência-da-api)
 - [Regras de negócio e rastreabilidade](#regras-de-negócio-e-rastreabilidade)
 - [Decisões sobre pontos em aberto](#decisões-sobre-pontos-em-aberto)
+- [Equipe](#equipe)
 
 ---
 
@@ -68,30 +75,18 @@ flowchart LR
     H --> I[Colaborador atualiza<br/>o progresso]
 ```
 
-A pesquisa de clima corre em paralelo: o RH publica a campanha, cada colaborador responde uma única vez e o RH
-consulta as médias por pergunta e por setor. Grupos com menos de 5 respostas não são exibidos.
+A pesquisa de clima corre em paralelo: o RH publica a campanha, cada colaborador responde uma única vez e, depois
+de encerrada, o RH consulta as médias por pergunta e por setor (só grupos com pelo menos 5 respostas).
 
-### Arquitetura
+### Telas
 
-Aplicação web em camadas, com o frontend consumindo uma API REST. Só o backend acessa o banco de dados.
+Capturas com os dados fictícios de demonstração.
 
-```mermaid
-flowchart LR
-    U[Navegador] --> F[Frontend<br/>React + Vite]
-    F -- "HTTP/JSON<br/>/api + token JWT" --> C[Controller]
-    subgraph Backend Spring Boot
-      C --> S[Service<br/>regras de negócio e permissões]
-      S --> R[Repository<br/>Spring Data JPA]
-    end
-    R --> DB[(H2 em dev<br/>PostgreSQL em produção)]
-```
-
-| Camada | Tecnologia |
+| Painel do RH | Matriz Nine Box |
 |---|---|
-| Backend | Java 21, Spring Boot 4.1, Spring Security (JWT + BCrypt), Spring Data JPA / Hibernate, Bean Validation |
-| Banco de dados | H2 em arquivo (desenvolvimento, sem instalação) · PostgreSQL (produção) |
-| Frontend | React 18, React Router, Vite 5 |
-| Testes | JUnit 5, Spring MockMvc, AssertJ; roteiro ponta a ponta em Node.js |
+| ![Painel do RH com indicadores, ciclo atual, PDIs e pesquisa de clima](docs/imagens/painel.jpg) | ![Matriz Nine Box com os nove quadrantes e a lista de pendentes](docs/imagens/nine-box.jpg) |
+| **Resultados: gestor × autoavaliação** | **Mapa de competências** |
+| ![Gráfico de barras comparando a nota do gestor e a autoavaliação por competência](docs/imagens/resultados.jpg) | ![Mapa de calor com as notas do gestor por competência e colaborador](docs/imagens/mapa-competencias.jpg) |
 
 ---
 
@@ -102,7 +97,7 @@ flowchart LR
 | Ferramenta | Versão | Como verificar |
 |---|---|---|
 | JDK (Java) | **21** | `java -version` |
-| Node.js | **20 ou superior** (inclui o npm) | `node -v` |
+| Node.js | **22 LTS** (ou 20.19+) | `node -v` |
 | Git | qualquer | `git --version` |
 
 Não é preciso instalar Maven nem banco de dados: o projeto usa o Maven Wrapper (`mvnw`) e, em
@@ -114,7 +109,7 @@ desenvolvimento, um banco H2 criado automaticamente na pasta `data/`.
 ### 2. Obter o código
 
 ```bash
-git clone <url-do-repositório>
+git clone https://github.com/MarcusMikael/sistema-planilhas.git
 cd sistema-planilhas
 ```
 
@@ -149,13 +144,41 @@ npm run dev
 
 ### 5. Acessar
 
-Abra **http://localhost:5173** e entre com uma das contas de demonstração abaixo. Em desenvolvimento, o Vite
-encaminha as chamadas `/api` para o backend na porta 8080.
+Abra **http://localhost:5173** e entre com uma das [contas de demonstração](#contas-de-demonstração). Em
+desenvolvimento, o Vite encaminha as chamadas `/api` para o backend na porta 8080.
 
-### Contas de demonstração
+### Recomeçar do zero
 
-Criadas automaticamente quando o banco está vazio. Todos os dados são **fictícios** (restrição RES-02 do DRS).
-**Senha de todas as contas: `sdpp123`.**
+Pare o backend, apague a pasta `data/` e suba de novo. O banco é recriado com os dados de demonstração.
+
+### Problemas comuns
+
+| Sintoma | Causa provável e solução |
+|---|---|
+| `java` não é reconhecido / `JAVA_HOME` inválido | JDK 21 não instalado ou fora do PATH. Instale e reabra o terminal; se necessário, defina `JAVA_HOME` com a pasta do JDK |
+| `Port 8080 was already in use` | Outro backend já está rodando. Feche-o ou suba em outra porta com a variável `PORT` (ex.: `PORT=8081 ./mvnw spring-boot:run`) e ajuste o endereço do proxy `/api` em `frontend/vite.config.js` |
+| Tela de login mostra "Não foi possível conectar ao servidor" | O backend não está no ar ou ainda está iniciando |
+| `npm` não é reconhecido | Node.js não instalado ou terminal aberto antes da instalação |
+| Login com "E-mail ou senha inválidos" | Confira a senha `sdpp123`. Se o banco foi criado por uma versão antiga, apague `data/` |
+| "Muitas tentativas de login sem sucesso" | 5 senhas erradas em 15 minutos bloqueiam a conta naquele navegador (ver [Segurança](#segurança)). Espere o tempo indicado ou entre de um navegador onde a conta já foi usada |
+| "Acordando o servidor…" no site publicado | O Render desligou o backend por falta de uso; o primeiro acesso leva até 1 minuto (ver [Deploy](#deploy)) |
+| Erros de banco depois de atualizar o código | O esquema mudou; apague `data/` (em desenvolvimento) |
+
+### Gerar a versão de distribuição
+
+```bash
+./mvnw clean package                         # gera target/sdpp-backend-0.0.1-SNAPSHOT.jar
+java -jar target/sdpp-backend-0.0.1-SNAPSHOT.jar
+
+cd frontend && npm run build                 # gera frontend/dist (arquivos estáticos)
+```
+
+---
+
+## Contas de demonstração
+
+Criadas automaticamente quando o banco está vazio (perfil `dev`, ou `SDPP_SEED_DEMO=true` em produção). Todos
+os dados são **fictícios** (restrição RES-02 do DRS). **Senha de todas as contas: `sdpp123`.**
 
 | Perfil | E-mail | Quem é |
 |---|---|---|
@@ -165,6 +188,10 @@ Criadas automaticamente quando o banco está vazio. Todos os dados são **fictí
 | Colaborador | `marina@sdpp.local` | Marina Oliveira – resultados do ciclo 2025/2: gestor 4,1 × autoavaliação 3,9 |
 | Colaborador | `joana@sdpp.local` | Joana D'Ávila – tem um PDI com ações |
 | Colaborador | `pedro@sdpp.local`, `lucas@sdpp.local`, `beatriz@sdpp.local`, `rafael@sdpp.local` | demais colaboradores |
+
+> **Contas de demonstração no site publicado.** Estão ativas em produção **de propósito**, para a apresentação.
+> Como a senha é pública, depois da apresentação troque as senhas (ou desative as contas) em *Usuários e
+> acessos* e defina `SDPP_SEED_DEMO=false` no Render.
 
 Dados já carregados:
 
@@ -184,97 +211,80 @@ Dados já carregados:
    *Liberar resultados*.
 4. Volte como colaborador e veja *Meus resultados*.
 
-### Recomeçar do zero
+---
 
-Pare o backend, apague a pasta `data/` e suba de novo. O banco é recriado com os dados de demonstração.
+## Testes e integração contínua
 
-### Problemas comuns
+| Conjunto | Comando | O que cobre |
+|---|---|---|
+| **Backend** (54 testes) | `./mvnw test` | Casos dourados de cálculo do DRS (Seção 6.1), critérios de aceitação de permissões e regras de negócio, limite de login, sessão por cookie e anonimato do clima. Usa H2 em memória |
+| **Frontend** (52 testes + lint) | `cd frontend`, depois `npm test` e `npm run lint` | Vitest + Testing Library: login, cabeçalho, gráficos, controle de notas, rascunho automático, modais (foco e alterações não salvas), aviso ao sair, Error Boundary, corrida de requisições no `useApi`, política de senha. ESLint com as regras de hooks do React |
+| **Ponta a ponta** (200 verificações) | `node scripts/e2e-api.mjs` | Ciclo completo com os três perfis, matriz de permissões, Nine Box, PDI, pesquisa de clima e cadastros, contra o servidor real |
 
-| Sintoma | Causa provável e solução |
+O roteiro ponta a ponta precisa do backend no ar com o banco de demonstração recém-criado (apague `data/` e
+reinicie o backend antes).
+
+**Integração contínua.** O GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda os três
+conjuntos em todo pull request e em cada push na `main`; o roteiro ponta a ponta sobe o backend real com os dados
+de demonstração. Para impedir o merge quando algo falha, o dono do repositório ativa em *Settings → Branches*
+uma regra para a `main` exigindo os checks *Backend*, *Frontend* e *Ponta a ponta*.
+
+---
+
+## Arquitetura
+
+Aplicação web em camadas, com o frontend consumindo uma API REST. Só o backend acessa o banco de dados. Em
+produção, a Vercel serve o frontend e repassa `/api` ao backend no Render, então navegador, frontend e API ficam
+no mesmo domínio.
+
+```mermaid
+flowchart LR
+    U[Navegador] -- HTTPS --> V[Vercel<br/>frontend React + Vite]
+    V -- "/api (proxy)<br/>cookie de sessão HttpOnly" --> C
+    subgraph R [Render · backend Spring Boot]
+      C[Controller] --> S[Service<br/>regras de negócio e permissões]
+      S --> Rp[Repository<br/>Spring Data JPA]
+    end
+    Rp --> DB[(PostgreSQL em produção<br/>H2 em desenvolvimento)]
+```
+
+| Camada | Tecnologia |
 |---|---|
-| `java` não é reconhecido / `JAVA_HOME` inválido | JDK 21 não instalado ou fora do PATH. Instale e reabra o terminal; se necessário, defina `JAVA_HOME` com a pasta do JDK |
-| `Port 8080 was already in use` | Outro backend já está rodando. Feche-o ou suba em outra porta com a variável `PORT` (ex.: `PORT=8081 ./mvnw spring-boot:run`) e ajuste o endereço do proxy `/api` em `frontend/vite.config.js` |
-| Tela de login mostra "Não foi possível conectar ao servidor" | O backend não está no ar ou ainda está iniciando |
-| `npm` não é reconhecido | Node.js não instalado ou terminal aberto antes da instalação |
-| Login com "E-mail ou senha inválidos" | Confira a senha `sdpp123`. Se o banco foi criado por uma versão antiga, apague `data/` |
-| Erros de banco depois de atualizar o código | O esquema mudou; apague `data/` (em desenvolvimento) |
+| Backend | Java 21, Spring Boot 4.1, Spring Security (JWT em cookie HttpOnly + BCrypt), Spring Data JPA / Hibernate, Bean Validation |
+| Banco de dados | H2 em arquivo (desenvolvimento, sem instalação) · PostgreSQL (produção) |
+| Frontend | React 18, React Router 7, Vite 8, ícones Lucide |
+| Testes | JUnit 5, Spring MockMvc, AssertJ · Vitest, Testing Library · ESLint · roteiro ponta a ponta em Node.js |
+| Integração e deploy | GitHub Actions · Vercel (frontend) · Render com Docker (backend e PostgreSQL) |
 
-### Gerar a versão de distribuição
-
-```bash
-./mvnw clean package                         # gera target/sdpp-backend-0.0.1-SNAPSHOT.jar
-java -jar target/sdpp-backend-0.0.1-SNAPSHOT.jar
-
-cd frontend && npm run build                 # gera frontend/dist (arquivos estáticos)
-```
-
----
-
-## Testes
-
-**Testes automatizados do backend.** São 54 testes: os casos dourados de cálculo do DRS (Seção 6.1) e os
-critérios de aceitação de permissões e regras de negócio. Usam um banco H2 em memória.
-
-```bash
-./mvnw test
-```
-
-**Teste ponta a ponta da API.** São 200 verificações contra o servidor real, incluindo:
-
-- um ciclo completo com os três perfis;
-- a matriz de permissões;
-- Nine Box, PDI e pesquisa de clima;
-- cadastros.
-
-Requer o backend no ar com o banco de demonstração recém-criado (apague `data/` e reinicie o backend antes):
-
-```bash
-node scripts/e2e-api.mjs
-```
-
-**Testes e lint do frontend.** Vitest + Testing Library (52 testes: cabeçalho, gráficos, foco nos modais, rascunho automático, política de senha, login por cookie, aviso de servidor lento, controle de notas,
-modal com alterações não salvas, aviso ao sair da página, Error Boundary e corrida de requisições no `useApi`)
-e ESLint com as regras de hooks do React.
-
-```bash
-cd frontend
-npm test
-npm run lint
-```
-
----
-
-**Integração contínua.** O GitHub Actions (`.github/workflows/ci.yml`) roda os três conjuntos acima em todo
-pull request e em cada push na `main`: testes do backend, lint, testes e build do frontend, e o roteiro ponta a
-ponta contra o backend real com os dados de demonstração. Para impedir o merge quando algo falha, o dono do
-repositório ativa em *Settings → Branches* uma regra para a `main` exigindo os checks *Backend*, *Frontend* e
-*Ponta a ponta*.
-
-## Estrutura do repositório
+### Estrutura do repositório
 
 ```
 sistema-planilhas/
 ├── pom.xml, mvnw, mvnw.cmd           Build do backend (Maven Wrapper)
+├── Dockerfile                        Imagem de produção do backend (Render)
+├── .github/workflows/ci.yml          Integração contínua (testes em todo PR)
 ├── src/main/java/sdpp_backend/
 │   ├── config/                       Segurança, propriedades e carga inicial (DataInitializer)
-│   ├── security/                     JWT, filtro de autenticação e regras de acesso por equipe
+│   ├── security/                     JWT, cookie de sessão, limite de login e regras de acesso por equipe
 │   ├── controller/                   Rotas REST (/api/...)
-│   ├── service/                      Regras de negócio; service/calculo = médias e Nine Box
+│   ├── service/                      Regras de negócio; service/calculo = médias, Nine Box e agrupamento do clima
 │   ├── repository/                   Acesso a dados (Spring Data JPA)
 │   ├── model/ e model/enums/         Entidades e domínios (perfis, status, níveis...)
 │   ├── dto/                          Objetos de entrada/saída da API, com validação
-│   └── exception/                    Erros padronizados (400, 401, 403, 404, 409, 422)
+│   └── exception/                    Erros padronizados (400, 401, 403, 404, 409, 422, 429)
 ├── src/main/resources/
 │   ├── application.properties        Configuração comum e parâmetros das regras (sdpp.*)
-│   ├── application-dev.properties    H2 em arquivo (padrão)
-│   └── application-prod.properties   PostgreSQL via variáveis de ambiente
-├── src/test/                         Testes automatizados
+│   ├── application-dev.properties    H2 em arquivo e dados de demonstração (padrão)
+│   └── application-prod.properties   PostgreSQL e cookie seguro via variáveis de ambiente
+├── src/test/                         Testes automatizados do backend
 ├── scripts/e2e-api.mjs               Teste ponta a ponta da API
+├── docs/imagens/                     Capturas de tela usadas neste README
 └── frontend/
-    ├── src/pages/                    Telas (painel, avaliações, Nine Box, PDI, clima...)
-    ├── src/components/               Layout com menu por perfil e componentes de interface
-    ├── src/api.js, auth.jsx          Cliente da API e sessão do usuário
-    └── vite.config.js, vercel.json   Servidor de desenvolvimento e deploy
+    ├── src/pages/                    Telas (painel, avaliações, Nine Box, PDI, clima...) e seus testes
+    ├── src/components/               Layout, cabeçalho, gráficos e componentes de interface
+    ├── src/api.js, auth.jsx, hooks.js Cliente da API, sessão do usuário e hooks compartilhados
+    ├── eslint.config.js              Regras de lint
+    └── vite.config.js, vercel.json   Servidor de desenvolvimento, testes e deploy (proxy e cabeçalhos)
 ```
 
 ### Parâmetros configuráveis
@@ -291,61 +301,64 @@ pelo RH ou pelo professor:
 
 ---
 
-## Produção e deploy
+## Segurança
 
-Backend com o perfil `prod` e PostgreSQL, configurado por variáveis de ambiente. O `Dockerfile` já define
-`SPRING_PROFILES_ACTIVE=prod` e roda a aplicação sem privilégios de root:
+**Sessão.** O login grava o token (JWT) em um cookie `HttpOnly` (`sdpp_sessao`, `SameSite=Lax`, `Secure` em
+produção): o JavaScript da página não tem acesso a ele, então um eventual XSS não consegue roubar a sessão.
+Trocar a senha (ou o RH redefini-la) invalida as sessões anteriores. Clientes de API (testes,
+`scripts/e2e-api.mjs`) usam `Authorization: Bearer <token>` com o token devolvido no corpo do login.
 
-| Variável | Exemplo |
-|---|---|
-| `SPRING_PROFILES_ACTIVE` | `prod` |
-| `DATABASE_URL` | `jdbc:postgresql://host:5432/sdpp` |
-| `DATABASE_USERNAME` / `DATABASE_PASSWORD` | credenciais do banco |
-| `SDPP_JWT_SECRET` | segredo aleatório com 32 ou mais caracteres (**obrigatório**: sem ele o backend não sobe) |
-| `SDPP_CORS_ORIGENS` | URL do frontend, ex.: `https://sdpp.vercel.app` (com o proxy da Vercel o CORS nem chega a ser usado) |
-| `SDPP_COOKIE_SECURE` / `SDPP_COOKIE_SAMESITE` | padrão `true` / `Lax` no perfil prod; não precisa alterar |
-| `SDPP_SEED_DEMO` | `true` só se quiser os dados de demonstração |
+**CSRF.** Requisições que alteram dados com autenticação por cookie exigem o cabeçalho `X-SDPP-CSRF`, que o
+frontend envia sempre e um site de terceiros não consegue enviar.
 
-> **Use um banco PostgreSQL novo.** O esquema mudou em relação à versão anterior do backend: as colunas
-> `peso`, `faixa` e `codigo_sessao` deixaram de existir e `resposta.id` virou UUID. O `ddl-auto=update` não
-> remove colunas antigas obrigatórias, então um banco criado pela versão anterior causaria erros ao gravar.
+**Limite de tentativas de login.** Os contadores ficam no banco e não zeram quando o Render reinicia:
 
-Frontend na **Vercel**:
-
-- diretório raiz: `frontend`;
-- comando de build: `npm run build`;
-- pasta de saída: `dist`;
-- **não** defina `VITE_API_URL`: o frontend chama `/api` no próprio domínio.
-
-O `vercel.json` faz duas coisas:
-
-1. **Repassa `/api` ao backend (proxy).** O destino é o backend no Render (`sistema-planilhas-najb.onrender.com`); se o serviço mudar de endereço, atualize-o aqui
-   antes do deploy. Assim frontend e API ficam no mesmo domínio e o cookie de sessão funciona em todos os
-   navegadores, inclusive Safari e iPhone (que bloqueiam cookies entre domínios diferentes).
-2. Redireciona as demais rotas da aplicação para o `index.html`.
-
-### Sessão
-
-**Senhas novas** precisam de ao menos 8 caracteres, com letras e números (as contas de demonstração mantêm
-`sdpp123`, pois são criadas direto no banco).
-
-**Limite de tentativas de login** (contadores no banco, não zeram quando o Render reinicia):
-
-- de um navegador desconhecido: 5 senhas erradas em 15 minutos bloqueiam a conta, e 50 erradas no total
-  (em qualquer conta) bloqueiam novos navegadores, contra quem testa uma senha comum em muitas contas;
+- de um navegador desconhecido, 5 senhas erradas em 15 minutos bloqueiam a conta, e 50 erradas no total (em
+  qualquer conta) bloqueiam novos navegadores, contra quem testa uma senha comum em muitas contas;
 - o navegador onde a pessoa já entrou recebe um cookie de dispositivo assinado (`sdpp_dispositivo`, 180 dias)
   e tem contador próprio: alguém errando a senha de propósito em outro lugar não bloqueia o dono da conta.
   **Dica para a apresentação:** entre uma vez com cada conta no computador que será usado, antes de começar.
 
-**Cabeçalhos de segurança** (`vercel.json`): Content-Security-Policy restritiva, `X-Frame-Options: DENY`,
-`nosniff`, `Referrer-Policy` e `Permissions-Policy`.
+**Senhas.** BCrypt; senhas novas precisam de ao menos 8 caracteres, com letras e números (as contas de
+demonstração mantêm `sdpp123`, pois são criadas direto no banco).
 
+**Cabeçalhos HTTP** (`vercel.json`): Content-Security-Policy restritiva, `X-Frame-Options: DENY`, `nosniff`,
+`Referrer-Policy` e `Permissions-Policy`.
 
-O login grava o token em um cookie `HttpOnly` (`sdpp_sessao`, `SameSite=Lax`, `Secure` em produção): o
-JavaScript da página não tem acesso a ele, então um eventual XSS não consegue roubar a sessão. Requisições que
-alteram dados com autenticação por cookie exigem o cabeçalho `X-SDPP-CSRF` (proteção contra CSRF), que o
-frontend envia sempre. Clientes de API (testes, `scripts/e2e-api.mjs`) continuam usando
-`Authorization: Bearer <token>` com o token devolvido no corpo do login.
+**Permissões e anonimato.** Toda regra de acesso (perfil, pessoa e equipe) é verificada no backend
+(`AcessoService`). As respostas do clima ficam separadas de quem respondeu, os resultados só saem depois de
+encerrada a pesquisa e setores pequenos são agrupados para impedir que uma resposta seja deduzida por subtração.
+
+---
+
+## Deploy
+
+### Backend no Render (Docker)
+
+O `Dockerfile` gera a imagem de produção: perfil `prod`, PostgreSQL, execução sem privilégios de root, fuso de
+Brasília e inicialização acelerada. Variáveis de ambiente:
+
+| Variável | Exemplo |
+|---|---|
+| `DATABASE_URL` | `jdbc:postgresql://host:5432/sdpp` |
+| `DATABASE_USERNAME` / `DATABASE_PASSWORD` | credenciais do banco |
+| `SDPP_JWT_SECRET` | segredo aleatório com 32 ou mais caracteres (**obrigatório**: sem ele o backend não sobe) |
+| `SDPP_SEED_DEMO` | `true` para criar as contas de demonstração em um banco vazio |
+| `SDPP_CORS_ORIGENS` | URL do frontend (com o proxy da Vercel o CORS nem chega a ser usado) |
+| `SDPP_COOKIE_SECURE` / `SDPP_COOKIE_SAMESITE` | padrão `true` / `Lax`; não precisa alterar |
+| `JAVA_OPTS` | opcional: substitui os ajustes padrão da JVM |
+
+No painel do Render, use `/api/saude` como *Health Check Path* (rota pública e leve, que não consulta o banco).
+
+### Frontend na Vercel
+
+- diretório raiz: `frontend`; comando de build: `npm run build`; pasta de saída: `dist`;
+- **não** defina `VITE_API_URL`: o frontend chama `/api` no próprio domínio.
+
+O `vercel.json` repassa `/api` ao backend (`sistema-planilhas-najb.onrender.com`; se o serviço mudar de
+endereço, atualize-o ali), redireciona as demais rotas para o `index.html` e define os cabeçalhos de segurança.
+Com o proxy, o cookie de sessão funciona em todos os navegadores, inclusive Safari e iPhone, que bloqueiam
+cookies entre domínios diferentes.
 
 ### Fuso horário
 
@@ -355,21 +368,16 @@ clima, datas de conclusão, ações atrasadas).
 
 ### Primeiro acesso lento (Render gratuito)
 
-No plano gratuito, o Render desliga o backend depois de cerca de 15 minutos sem uso. O próximo acesso precisa
-religar o contêiner e iniciar o Spring Boot, o que pode levar de 30 segundos a 1 minuto. O que já foi feito:
+No plano gratuito, o Render desliga o backend depois de cerca de 15 minutos sem uso, e o próximo acesso leva de
+30 segundos a 1 minuto. Para amenizar:
 
-- **Aviso na tela:** se uma requisição passar de 3 segundos, aparece "Acordando o servidor…", para a tela
-  parada não parecer um erro.
+- **Aviso na tela:** se uma requisição passar de 3 segundos, aparece "Acordando o servidor…".
 - **Inicialização mais rápida:** o `Dockerfile` extrai o jar e gera um arquivo de CDS (Class Data Sharing)
-  durante o build, além de usar ajustes da JVM para pouca CPU (`JAVA_OPTS`). Em medição local, o tempo até o
-  contexto do Spring ficar pronto caiu de cerca de 9,3 s para 4,9 s.
-- **Rota de saúde:** `GET /api/saude` é pública e leve (não consulta o banco). Use-a no campo *Health Check
-  Path* do Render.
+  durante o build, além de ajustar a JVM para pouca CPU. Em medição local, o tempo até o contexto do Spring
+  ficar pronto caiu de cerca de 9,3 s para 4,9 s.
 
-Para eliminar a espera de vez: use uma instância paga do Render (não desliga) ou, perto de apresentações,
-configure um serviço de ping gratuito (por exemplo, UptimeRobot) para chamar
-`https://sistema-planilhas-najb.onrender.com/api/saude` a cada 10 minutos. Um único serviço ligado o mês inteiro cabe
-nas horas gratuitas do Render, mas é um contorno que o próprio Render não recomenda.
+Para eliminar a espera: use uma instância paga ou, perto de apresentações, um serviço de ping gratuito (por
+exemplo, UptimeRobot) chamando `https://sistema-planilhas-najb.onrender.com/api/saude` a cada 10 minutos.
 
 ### Banco de dados em produção
 
@@ -384,31 +392,38 @@ nas horas gratuitas do Render, mas é um contorno que o próprio Render não rec
   Para restaurar em um banco novo: `pg_restore --no-owner --dbname "URL_DO_BANCO_NOVO" sdpp-backup.dump`.
 - **Esquema:** o Hibernate atualiza as tabelas sozinho (`ddl-auto=update`): cria tabelas e colunas novas, mas
   nunca apaga nem altera colunas existentes. Mudanças desse tipo (renomear, mudar tipo, remover) exigem SQL
-  manual no banco. Se o projeto continuar depois da disciplina, o próximo passo é adotar migrações versionadas
-  (Flyway) gerando a primeira a partir do esquema real de produção.
+  manual. Se o projeto continuar depois da disciplina, o próximo passo é adotar migrações versionadas (Flyway),
+  gerando a primeira a partir do esquema real de produção.
 
-> **Risco R-01 (Arquitetura 7.2):** a Vercel não executa Java. A proposta é publicar o frontend na Vercel e o
-> backend em uma plataforma com JVM ou contêiner (Render, Railway, Fly.io etc.). Confirmar com o professor.
+### Decisão sobre o risco R-01 (Arquitetura 7.2)
+
+A Vercel não executa Java. **Decisão adotada:** frontend na Vercel e backend com PostgreSQL no Render (Docker),
+ligados pelo proxy `/api` do `vercel.json`.
 
 ---
 
 ## Referência da API
 
-Todas as rotas ficam em `/api` e, exceto `POST /api/auth/login`, exigem o cabeçalho
-`Authorization: Bearer <token>`. Os erros seguem a estrutura `{status, erro, mensagem, campos, timestamp}`:
+Todas as rotas ficam em `/api`. O navegador se autentica pelo cookie de sessão (ver [Segurança](#segurança));
+clientes de API usam `Authorization: Bearer <token>`. São públicas apenas `POST /api/auth/login`,
+`POST /api/auth/logout` e `GET /api/saude`.
+
+Os erros seguem a estrutura `{status, erro, mensagem, campos, timestamp}`:
 
 | Código | Significado |
 |---|---|
-| 400 | validação |
+| 400 | validação (`campos` traz o erro de cada campo) |
 | 401 | não autenticado |
 | 403 | sem permissão |
 | 404 | não encontrado |
 | 409 | duplicidade ou registro em uso |
 | 422 | regra de negócio |
+| 429 | muitas tentativas de login |
 
 | Recurso | Principais operações |
 |---|---|
-| `/api/auth` | `login`, `me`, `senha` |
+| `/api/auth` | `login`, `logout`, `me`, `senha` (devolve um token novo e invalida os anteriores) |
+| `/api/saude` | verificação de saúde (pública) |
 | `/api/usuarios` | CRUD (RH); exclusão lógica |
 | `/api/colaboradores` | listar conforme a equipe, CRUD (RH), `/equipe`, `/{id}/historico` |
 | `/api/departamentos`, `/api/cargos` | CRUD (RH) |
@@ -417,7 +432,6 @@ Todas as rotas ficam em `/api` e, exceto `POST /api/auth/login`, exigem o cabeç
 | `/api/avaliacoes` | `pendentes`, abrir, `/{id}/notas`, `/{id}/concluir` |
 | `/api/nine-box` | matriz por ciclo, registro do gestor, `quadrantes` |
 | `/api/pdis`, `/api/acoes-pdi` | PDI e ações; `PATCH /acoes-pdi/{id}/progresso` |
-| `/api/auth` | `login` (limite de tentativas: HTTP 429, ver *Sessão*), `logout`, `me`, `senha` (devolve um token novo e invalida os anteriores) |
 | `/api/pesquisas-clima` | campanhas, perguntas, `publicar`, `encerrar`, `respostas`, `resultados` (só agregados e só depois de encerrar) |
 | `/api/indicadores` | indicadores no escopo do perfil |
 
@@ -438,6 +452,14 @@ Todas as rotas ficam em `/api` e, exceto `POST /api/auth/login`, exigem o cabeç
 | RN-09 liberação de resultados | `ResultadoService` / `AvaliacaoService` (visibilidade) |
 | RN-11 médias | `CalculoMedias` (testes em `CalculoMediasTest`) |
 | RF-SEG-02 acesso por pessoa e equipe | `AcessoService` + regras por perfil no `SecurityConfig` e `@PreAuthorize` |
+
+Regras complementares adotadas para manter os dados consistentes:
+
+- o gestor responsável precisa ter acesso com perfil Gestor ou RH, e quem gere uma equipe ativa não pode ser
+  desativado nem perder o acesso de gestão (`ColaboradorService`, `UsuarioService`);
+- trocar o gestor durante o ciclo descarta o rascunho da avaliação do gestor anterior (`ColaboradorService`);
+- avaliações só dentro do período do ciclo (`AvaliacaoService`);
+- o e-mail do cadastro e o e-mail de acesso andam juntos (`ColaboradorService`, `UsuarioService`).
 
 ---
 
@@ -460,3 +482,21 @@ Os pontos em aberto (PA) do DRS que ainda não tinham definição foram resolvid
 | PA-15 | Nine Box: o gestor responsável (perfil Gestor ou RH) registra a da sua equipe, o RH consulta tudo e o colaborador não vê. Resultados de clima: só RH | `AcessoService` e services |
 | PA-21/22 | Recursos em texto livre; status A fazer / Em andamento / Concluído | `AcaoPDIModel` |
 | PA-23 | Setor copiado do departamento do cadastro | `PesquisaClimaService` |
+
+---
+
+## Equipe
+
+<!-- Para completar: substitua "_a preencher_" pelo link do GitHub de cada integrante, no formato [@usuario](https://github.com/usuario). -->
+
+| Integrante | GitHub |
+|---|---|
+| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) |
+| Marcos André dos Santos Soares | _a preencher_ |
+| Carlos Arthur Moraes Gonçalves | _a preencher_ |
+| João Pedro Lima Barbosa | _a preencher_ |
+| Rodofo Dheymison Ferreira Silva | _a preencher_ |
+| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ |
+| Enzo Morais Gonçalves | _a preencher_ |
+
+Orientação: professor Aluysio Fonseca · Disciplina Gestão de Pessoas · Engenharia de Software – UNIFSA, 2026.
