@@ -27,7 +27,23 @@ public class UsuarioModel {
     @Column(nullable = false)
     private Boolean ativo = true;
 
+    /**
+     * Versão dos tokens emitidos para a conta. Ao trocar a senha a versão aumenta e os tokens
+     * anteriores deixam de valer. Coluna anulável para que o "ddl-auto=update" funcione em bancos existentes.
+     */
+    @Column(name = "versao_token")
+    private Integer versaoToken = 0;
+
     public UsuarioModel() {
+    }
+
+    public int getVersaoToken() {
+        return versaoToken == null ? 0 : versaoToken;
+    }
+
+    /** Invalida todos os tokens já emitidos para esta conta. */
+    public void revogarTokens() {
+        this.versaoToken = getVersaoToken() + 1;
     }
 
     public Long getId() {

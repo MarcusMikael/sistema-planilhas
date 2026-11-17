@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAcao, useApi } from '../hooks.js';
@@ -17,14 +17,15 @@ export default function CicloDetalhe() {
   const [selecao, setSelecao] = useState(new Set());
   const [datas, setDatas] = useState(null);
   const [aviso, setAviso] = useState(null);
+  const [origem, setOrigem] = useState(null);
   const acao = useAcao();
 
-  useEffect(() => {
-    if (ciclo.data) {
-      setSelecao(new Set(ciclo.data.competencias.map((c) => c.competencia.id)));
-      setDatas({ nome: ciclo.data.nome, dataInicio: ciclo.data.dataInicio, dataFim: ciclo.data.dataFim });
-    }
-  }, [ciclo.data]);
+  // Estado editável refeito quando chegam dados novos do ciclo
+  if (ciclo.data && ciclo.data !== origem) {
+    setOrigem(ciclo.data);
+    setSelecao(new Set(ciclo.data.competencias.map((c) => c.competencia.id)));
+    setDatas({ nome: ciclo.data.nome, dataInicio: ciclo.data.dataInicio, dataFim: ciclo.data.dataFim });
+  }
 
   if (ciclo.carregando || catalogo.carregando) return <Carregando />;
   if (ciclo.erro) return <Alerta erro={ciclo.erro} />;

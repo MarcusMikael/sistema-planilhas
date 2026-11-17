@@ -10,9 +10,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * (Arquitetura 5.4 – Variabilidade).
  */
 @ConfigurationProperties(prefix = "sdpp")
-public record SdppProperties(Jwt jwt, Cors cors, NineBox ninebox, Clima clima, Seed seed) {
+public record SdppProperties(Jwt jwt, Cookie cookie, Cors cors, NineBox ninebox, Clima clima, Seed seed) {
 
     public record Jwt(String secret, int expiracaoHoras) {
+    }
+
+    /** Cookie HttpOnly da sessão: secure exige HTTPS; sameSite Lax quando frontend e API estão no mesmo site. */
+    public record Cookie(boolean secure, String sameSite) {
     }
 
     public record Cors(List<String> origens) {

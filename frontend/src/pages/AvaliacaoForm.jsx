@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { useAcao, useApi } from '../hooks.js';
+import { useAcao, useApi, useAvisoSaida } from '../hooks.js';
 import { Alerta, Badge, Cartao, Carregando, Pagina } from '../components/ui.jsx';
 import { ROTULOS, fmtData } from '../format.js';
 
@@ -13,12 +13,23 @@ export default function AvaliacaoForm() {
   const { usuario } = useAuth();
   const av = useApi(`/avaliacoes/${id}`);
   const [itens, setItens] = useState([]);
+  const [origem, setOrigem] = useState(null);
   const [msg, setMsg] = useState(null);
   const acao = useAcao();
 
-  useEffect(() => {
-    if (av.data) setItens(av.data.itens.map((i) => ({ ...i })));
-  }, [av.data]);
+  // Cópia editável das notas, refeita quando chegam dados novos do servidor
+  if (av.data && av.data !== origem) {
+    setOrigem(av.data);
+    setItens(av.data.itens.map((i) => ({ ...i })));
+  }
+
+  // Notas ou comentários diferentes do que está salvo no servidor
+  const salvos = av.data?.itens || [];
+  const sujo = itens.some((i) => {
+    const s = salvos.find((x) => x.cicloCompetenciaId === i.cicloCompetenciaId);
+    return s && ((s.nota ?? null) !== (i.nota ?? null) || (s.comentario || '') !== (i.comentario || ''));
+  });
+  useAvisoSaida(sujo);
 
   if (av.carregando) return <Carregando />;
   if (av.erro) return <Pagina titulo="Avaliação"><Alerta erro={av.erro} /></Pagina>;

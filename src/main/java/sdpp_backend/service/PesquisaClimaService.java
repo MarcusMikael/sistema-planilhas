@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -41,6 +40,7 @@ import sdpp_backend.repository.PesquisaClimaRepository;
 import sdpp_backend.repository.RespostaRepository;
 import sdpp_backend.security.AcessoService;
 import sdpp_backend.security.UsuarioLogado;
+import sdpp_backend.service.calculo.AgrupamentoSetores;
 import sdpp_backend.service.calculo.CalculoMedias;
 
 /**
@@ -244,9 +244,18 @@ public class PesquisaClimaService {
 
     // ---------- Resultados agregados (RF-IND-03, CA-RF-IND-03) ----------
 
+    /**
+     * Resultados só depois do encerramento: com a campanha aberta, comparar duas consultas
+     * (antes e depois de uma nova resposta) revelaria o que a última pessoa respondeu.
+     * Os setores são agrupados por AgrupamentoSetores para impedir a dedução por subtração.
+     */
     @Transactional(readOnly = true)
     public ResultadoClimaResponse resultados(Long pesquisaId) {
         PesquisaClimaModel p = buscar(pesquisaId);
+        if (p.getStatus() != StatusPesquisa.ENCERRADA) {
+            throw new RegraNegocioException(
+                    "Os resultados ficam disponíveis depois que a pesquisa é encerrada, para preservar o anonimato.");
+        }
         int minimo = props.clima().minimoRespostas();
         Map<Long, List<RespostaModel>> porPergunta = respostaRepository.findByPerguntaPesquisaId(pesquisaId).stream()
                 .collect(Collectors.groupingBy(r -> r.getPergunta().getId()));
@@ -254,13 +263,13 @@ public class PesquisaClimaService {
         for (PerguntaModel q : perguntaRepository.findByPesquisaIdOrderByOrdem(pesquisaId)) {
             List<RespostaModel> rs = porPergunta.getOrDefault(q.getId(), List.of());
             boolean exibido = rs.size() >= minimo;
-            Map<String, List<RespostaModel>> porSetor = new TreeMap<>(rs.stream()
-                    .collect(Collectors.groupingBy(r -> Objects.requireNonNullElse(r.getSetor(), "Não informado"))));
-            List<ResultadoSetorResponse> setores = porSetor.entrySet().stream().map(e -> {
-                boolean ok = e.getValue().size() >= minimo;
-                return new ResultadoSetorResponse(e.getKey(), e.getValue().size(), ok,
-                        ok && q.getTipo() == TipoPergunta.ESCALA ? media(e.getValue()) : null);
-            }).toList();
+            Map<String, List<RespostaModel>> porSetor = AgrupamentoSetores.agrupar(rs.stream()
+                    .collect(Collectors.groupingBy(r -> Objects.requireNonNullElse(r.getSetor(), "Não informado"))),
+                    minimo);
+            List<ResultadoSetorResponse> setores = porSetor.entrySet().stream()
+                    .map(e -> new ResultadoSetorResponse(e.getKey(), e.getValue().size(), true,
+                            q.getTipo() == TipoPergunta.ESCALA ? media(e.getValue()) : null))
+                    .toList();
             Double media = null;
             List<Long> distribuicao = null;
             List<String> textos = null;

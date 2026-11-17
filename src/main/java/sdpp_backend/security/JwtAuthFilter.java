@@ -2,6 +2,8 @@ package sdpp_backend.security;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,23 +25,47 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final ColaboradorRepository colaboradorRepository;
+    private final CookieSessao cookieSessao;
+
+    private static final Set<String> METODOS_SEGUROS = Set.of("GET", "HEAD", "OPTIONS");
 
     public JwtAuthFilter(JwtService jwtService, UsuarioRepository usuarioRepository,
-                         ColaboradorRepository colaboradorRepository) {
+                         ColaboradorRepository colaboradorRepository, CookieSessao cookieSessao) {
         this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
         this.colaboradorRepository = colaboradorRepository;
+        this.cookieSessao = cookieSessao;
+    }
+
+    /**
+     * Token do cabeçalho Authorization (clientes de API) ou do cookie HttpOnly (navegador).
+     * Pelo cookie, requisições que alteram dados exigem o cabeçalho X-SDPP-CSRF: o navegador envia cookies
+     * em requisições disparadas por outros sites, mas um site de terceiros não consegue adicionar esse
+     * cabeçalho sem a liberação do CORS. Sem ele, a requisição segue sem autenticação.
+     */
+    private Optional<String> token(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return Optional.of(header.substring(7));
+        }
+        boolean seguro = METODOS_SEGUROS.contains(request.getMethod());
+        if (!seguro && request.getHeader(CookieSessao.CABECALHO_CSRF) == null) {
+            return Optional.empty();
+        }
+        return cookieSessao.ler(request);
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            Long usuarioId = jwtService.validar(header.substring(7));
-            if (usuarioId != null) {
-                usuarioRepository.findById(usuarioId)
+        Optional<String> bruto = token(request);
+        if (bruto.isPresent()) {
+            JwtService.TokenValido token = jwtService.validar(bruto.get());
+            if (token != null) {
+                usuarioRepository.findById(token.usuarioId())
                         .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+                        // Tokens emitidos antes da última troca de senha são recusados
+                        .filter(u -> u.getVersaoToken() == token.versao())
                         .ifPresent(u -> {
                             Long colaboradorId = colaboradorRepository.findByUsuarioId(u.getId())
                                     .map(c -> c.getId()).orElse(null);

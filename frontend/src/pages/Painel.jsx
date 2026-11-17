@@ -77,7 +77,7 @@ export default function Painel() {
           </div>
           {isRH && d.pesquisaAtual && (
             <Cartao titulo="Pesquisa de clima em andamento"
-              acoes={<Link to={`/clima/${d.pesquisaAtual.id}/resultados`}>Ver resultados agregados →</Link>}>
+              acoes={<Link to={`/clima/${d.pesquisaAtual.id}/gestao`}>Gerenciar campanha →</Link>}>
               <div className="linha">
                 <strong>{d.pesquisaAtual.titulo}</strong>
                 <span className="texto-2">{d.pesquisaAtual.participacoes} de {d.pesquisaAtual.elegiveis} responderam</span>

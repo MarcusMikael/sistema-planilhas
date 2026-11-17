@@ -43,7 +43,8 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/saude").permitAll()
                         // Operações exclusivas do RH são barradas antes de ler/validar o corpo da requisição
                         // (o @PreAuthorize nos controllers continua como segunda camada).
                         .requestMatchers("/api/usuarios/**").hasRole("RH")
@@ -87,6 +88,9 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(props.cors().origens());
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
+        // Necessário para o navegador enviar o cookie de sessão quando o frontend chama a API em outra origem
+        // (ex.: desenvolvimento sem o proxy do Vite). Só as origens de sdpp.cors.origens são aceitas.
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
         return source;

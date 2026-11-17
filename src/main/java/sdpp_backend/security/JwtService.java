@@ -40,10 +40,15 @@ public class JwtService {
         this.expiracaoSegundos = props.jwt().expiracaoHoras() * 3600L;
     }
 
-    public String gerar(Long usuarioId) {
+    /** Dados de um token válido: o usuário e a versão de credenciais em que foi emitido. */
+    public record TokenValido(Long usuarioId, int versao) {
+    }
+
+    public String gerar(Long usuarioId, int versao) {
         long agora = Instant.now().getEpochSecond();
         Map<String, Object> claims = new LinkedHashMap<>();
         claims.put("sub", usuarioId.toString());
+        claims.put("ver", versao);
         claims.put("iat", agora);
         claims.put("exp", agora + expiracaoSegundos);
         String payload = ENCODER.encodeToString(json.writeValueAsBytes(claims));
@@ -51,8 +56,8 @@ public class JwtService {
         return conteudo + "." + assinar(conteudo);
     }
 
-    /** Retorna o id do usuário se o token for válido e não expirado; caso contrário, null. */
-    public Long validar(String token) {
+    /** Retorna os dados do token se ele for válido e não expirado; caso contrário, null. */
+    public TokenValido validar(String token) {
         try {
             String[] partes = token.split("\\.");
             if (partes.length != 3 || !partes[0].equals(HEADER)) {
@@ -68,7 +73,9 @@ public class JwtService {
             if (Instant.now().getEpochSecond() >= exp) {
                 return null;
             }
-            return Long.valueOf((String) claims.get("sub"));
+            Object ver = claims.get("ver");
+            return new TokenValido(Long.valueOf((String) claims.get("sub")),
+                    ver instanceof Number n ? n.intValue() : 0);
         } catch (RuntimeException e) {
             return null;
         }
