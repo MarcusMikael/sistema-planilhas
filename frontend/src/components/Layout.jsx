@@ -2,11 +2,11 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Award, Building2, CalendarRange, ChartColumn, ClipboardCheck, History, KeyRound, LayoutDashboard, LayoutGrid,
-  LogOut, Menu, MessageSquareHeart, Sprout, Table2, UserCog, Users, X,
+  Menu, MessageSquareHeart, Sprout, Table2, UserCog, Users, X,
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
-import { ROTULOS } from '../format.js';
 import { useBloqueioSaida } from '../hooks.js';
+import Cabecalho from './Cabecalho.jsx';
 import ErroBoundary from './ErroBoundary.jsx';
 import { Carregando } from './ui.jsx';
 
@@ -64,6 +64,7 @@ export default function Layout() {
   const local = useLocation();
   const botaoMenu = useRef(null);
   const menu = useRef(null);
+  const grupos = itensMenu(auth);
   useBloqueioSaida();
 
   // Fecha a gaveta ao trocar de página (ajuste de estado durante a renderização, sem efeito)
@@ -90,21 +91,15 @@ export default function Layout() {
   return (
     <div className="app">
       <a className="pular" href="#conteudo">Pular para o conteúdo</a>
-      <header className="topo-movel">
+      <Cabecalho grupos={grupos} inicio={(
         <button ref={botaoMenu} className="btn-menu" onClick={() => setAberto((a) => !a)}
           aria-label={aberto ? 'Fechar menu' : 'Abrir menu'} aria-expanded={aberto} aria-controls="menu-principal">
           {aberto ? <X {...ICONE} /> : <Menu {...ICONE} />}
         </button>
-        <div className="marca-logo" aria-hidden="true">S</div>
-        <strong>SDPP</strong>
-        <span className="espaco" />
-        <span className={`perfil-badge perfil-${auth.usuario.perfil}`}>
-          Visão {ROTULOS.perfil[auth.usuario.perfil]}
-        </span>
-      </header>
+      )} />
       {aberto && <div className="lateral-fundo" onClick={() => setAberto(false)} aria-hidden="true" />}
       <nav id="menu-principal" ref={menu} className={`lateral ${aberto ? 'aberta' : ''}`} aria-label="Menu principal">
-        {itensMenu(auth).map((g, i) => (
+        {grupos.map((g, i) => (
           <div key={i}>
             {g.titulo && <div className="menu-grupo">{g.titulo}</div>}
             {g.itens.map(({ para, rotulo, fim, Icone }) => (
@@ -116,13 +111,6 @@ export default function Layout() {
             ))}
           </div>
         ))}
-        <div className="lateral-rodape">
-          <strong>{auth.usuario.nome}</strong>
-          <span>{ROTULOS.perfil[auth.usuario.perfil]}</span>
-          <div>
-            <button onClick={auth.sair}><LogOut size={16} strokeWidth={1.5} aria-hidden="true" /> Sair</button>
-          </div>
-        </div>
       </nav>
       <main className="conteudo" id="conteudo" tabIndex={-1}>
         <ErroBoundary key={local.pathname}>
