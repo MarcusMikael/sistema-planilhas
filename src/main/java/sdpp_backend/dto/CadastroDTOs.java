@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import sdpp_backend.model.CargoModel;
 import sdpp_backend.model.ColaboradorModel;
@@ -38,9 +39,14 @@ public final class CadastroDTOs {
                                        Long colaboradorId, Boolean ehGestorDeEquipe) {
     }
 
+    /** Política para senhas novas: ao menos 8 caracteres, com letras e números. */
+    public static final String SENHA_REGEX = "^(?=.*\\p{L})(?=.*\\d).{8,}$";
+    public static final String SENHA_MENSAGEM = "A senha deve ter ao menos 8 caracteres, com letras e números";
+
     public record TrocarSenhaRequest(
             @NotBlank(message = "Informe a senha atual") String senhaAtual,
-            @NotBlank @Size(min = 6, message = "A nova senha deve ter ao menos 6 caracteres") String novaSenha) {
+            @NotBlank(message = "Informe a nova senha") @Size(max = 100)
+            @Pattern(regexp = SENHA_REGEX, message = SENHA_MENSAGEM) String novaSenha) {
     }
 
     // ---------- Usuários ----------
@@ -48,7 +54,7 @@ public final class CadastroDTOs {
     public record UsuarioRequest(
             @NotBlank(message = "Informe o nome") @Size(max = 150) String nome,
             @NotBlank(message = "Informe o e-mail") @Email(message = "E-mail inválido") String email,
-            @Size(min = 6, message = "A senha deve ter ao menos 6 caracteres") String senha,
+            @Size(max = 100) @Pattern(regexp = SENHA_REGEX, message = SENHA_MENSAGEM) String senha,
             @NotNull(message = "Informe o perfil") Perfil perfil,
             Boolean ativo,
             Long colaboradorId) {

@@ -219,15 +219,24 @@ public class PDIService {
                 a.getDataTermino(), a.getEntrega(), a.getRecursos(), a.getStatus(), a.getProgresso(), atrasada(a));
     }
 
+    /**
+     * O gestor exibido e as permissões seguem o gestor ATUAL do colaborador (o mesmo critério das regras de
+     * edição), e não o gestor gravado quando o PDI foi criado. A tela usa podeEditar/podeAtualizarProgresso
+     * em vez de recalcular as regras.
+     */
     private PDIResponse paraResponse(PDIModel p) {
         List<AcaoPDIModel> acoes = p.getId() == null ? List.of() : acaoRepository.findByPdiIdOrderByDataInicio(p.getId());
         ColaboradorModel c = p.getColaborador();
-        ColaboradorModel g = p.getGestor();
+        ColaboradorModel g = c.getGestor();
+        UsuarioLogado u = acesso.atual();
+        boolean podeEditar = u.isRH() || acesso.ehGestorDe(u, c);
+        boolean podeAtualizarProgresso = p.getStatus() == StatusPDI.ATIVO && (podeEditar || acesso.ehOProprio(u, c));
         return new PDIResponse(p.getId(), c.getId(), c.getNome(), c.getDepartamento().getNome(),
                 c.getCargo().getNome(), c.getDataAdmissao(), g == null ? null : g.getId(),
                 g == null ? null : g.getNome(), p.getCiclo() == null ? null : p.getCiclo().getId(),
                 p.getCiclo() == null ? null : p.getCiclo().getNome(), p.getCargoDesejado(), p.getObjetivo(),
                 p.getHabilidadesDesenvolver(), p.getHabilidadesSucesso(), p.getAnotacoes(), p.getStatus(),
-                p.getCriadoEm(), progressoGeral(acoes), acoes.stream().map(this::paraResponse).toList());
+                p.getCriadoEm(), progressoGeral(acoes), acoes.stream().map(this::paraResponse).toList(),
+                podeEditar, podeAtualizarProgresso);
     }
 }

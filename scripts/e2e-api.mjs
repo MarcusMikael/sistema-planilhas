@@ -227,8 +227,8 @@ esperar('admissão no futuro', await req(T.rh, 'POST', '/colaboradores', { nome:
 esperar('e-mail inválido', await req(T.rh, 'POST', '/usuarios', { nome: 'X', email: 'x', senha: '123456', perfil: 'RH' }), 400);
 esperar('perfil inexistente', await req(T.rh, 'POST', '/usuarios', { nome: 'X', email: 'x@sdpp.local', senha: '123456', perfil: 'ADMIN' }), 400);
 esperar('senha curta', await req(T.rh, 'POST', '/usuarios', { nome: 'X', email: 'x@sdpp.local', senha: '123', perfil: 'RH' }), 400);
-esperar('vincular colaborador que já tem conta', await req(T.rh, 'POST', '/usuarios', { nome: 'X', email: 'x2@sdpp.local', senha: '123456', perfil: 'COLABORADOR', colaboradorId: id('Pedro Santos') }), 409);
-esperar('troca de senha com senha atual errada', await req(T.pedro, 'POST', '/auth/senha', { senhaAtual: 'errada', novaSenha: '1234567' }), 422);
+esperar('vincular colaborador que já tem conta', await req(T.rh, 'POST', '/usuarios', { nome: 'X', email: 'x2@sdpp.local', senha: 'Senha1234', perfil: 'COLABORADOR', colaboradorId: id('Pedro Santos') }), 409);
+esperar('troca de senha com senha atual errada', await req(T.pedro, 'POST', '/auth/senha', { senhaAtual: 'errada', novaSenha: 'NovaSenha1' }), 422);
 esperar('rota inexistente', await req(T.rh, 'GET', '/nao-existe'), 404);
 esperar('JSON inválido', { status: (await fetch(BASE + '/ciclos', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + T.rh }, body: '{' })).status, data: null }, 400);
 

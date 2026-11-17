@@ -23,6 +23,8 @@ public interface ColaboradorRepository extends JpaRepository<ColaboradorModel, L
 
     boolean existsByGestorId(Long gestorId);
 
+    long countByGestorIdAndAtivoTrue(Long gestorId);
+
     long countByDepartamentoId(Long departamentoId);
 
     long countByCargoId(Long cargoId);

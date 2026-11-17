@@ -46,14 +46,17 @@ export default function CicloDetalhe() {
     setSelecao(nova);
   }
 
+  /** Executa a ação; devolve true se deu certo (o erro fica exibido na página). */
   async function executar(fn, msg) {
     try {
       const r = await acao.executar(fn);
       if (r) ciclo.setData(r);
       setAviso(msg);
       avaliacoes.recarregar();
+      return true;
     } catch {
       setAviso(null);
+      return false;
     }
   }
 
@@ -76,14 +79,22 @@ export default function CicloDetalhe() {
             title={qComp !== POR_TIPO || qTec !== POR_TIPO ? 'Selecione e salve 5 + 5 competências' : ''}
             onClick={async () => {
               if (window.confirm('Liberar o ciclo? As competências não poderão mais ser alteradas.')) {
-                await executar(() => api.put(`/ciclos/${id}/competencias`, { competenciaIds: [...selecao] }));
-                executar(() => api.post(`/ciclos/${id}/liberar`), 'Ciclo liberado: colaboradores já podem fazer a autoavaliação.');
+                // Só libera se a seleção foi salva
+                if (await executar(() => api.put(`/ciclos/${id}/competencias`, { competenciaIds: [...selecao] }))) {
+                  executar(() => api.post(`/ciclos/${id}/liberar`), 'Ciclo liberado: colaboradores já podem fazer a autoavaliação.');
+                }
               }
             }}>Liberar ciclo</button>
         )}
         {c.status === 'LIBERADO' && (
           <button className="btn-primario" disabled={acao.enviando} onClick={() => {
-            if (window.confirm('Liberar os resultados? Gestores e colaboradores passarão a consultá-los e o ciclo será fechado para avaliações.')) {
+            // Cada colaborador ativo tem duas avaliações esperadas: autoavaliação e avaliação do gestor
+            const pendentes = ativos.length * 2 - ativos.flatMap((x) => ['AUTOAVALIACAO', 'GESTOR']
+              .filter((tipo) => status(x.id, tipo)?.status === 'CONCLUIDA')).length;
+            const alerta = pendentes > 0
+              ? `Atenção: ${pendentes} avaliação(ões) ainda não foram concluídas e ficarão sem resultado neste ciclo.\n\n`
+              : '';
+            if (window.confirm(`${alerta}Liberar os resultados? Gestores e colaboradores passarão a consultá-los e o ciclo será fechado para avaliações.`)) {
               executar(() => api.post(`/ciclos/${id}/liberar-resultados`), 'Resultados liberados.');
             }
           }}>Liberar resultados</button>

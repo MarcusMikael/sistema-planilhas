@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import sdpp_backend.dto.CadastroDTOs.LoginRequest;
@@ -35,9 +36,12 @@ public class AuthController {
      * O token também vem no corpo para clientes de API (testes e scripts), que usam o cabeçalho Authorization.
      */
     @PostMapping("/login")
-    public LoginResponse login(@Valid @RequestBody LoginRequest req, HttpServletResponse resposta) {
-        LoginResponse login = service.login(req);
+    public LoginResponse login(@Valid @RequestBody LoginRequest req, HttpServletRequest requisicao,
+                               HttpServletResponse resposta) {
+        LoginResponse login = service.login(req, cookie.lerDispositivo(requisicao, req.email()));
         cookie.gravar(resposta, login.token());
+        // Marca este navegador como confiável para a conta (não é bloqueado por falhas vindas de outros lugares)
+        cookie.gravarDispositivo(requisicao, resposta, req.email());
         return login;
     }
 

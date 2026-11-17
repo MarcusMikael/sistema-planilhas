@@ -13,6 +13,7 @@ import sdpp_backend.exception.RecursoNaoEncontradoException;
 import sdpp_backend.exception.RegraNegocioException;
 import sdpp_backend.model.ColaboradorModel;
 import sdpp_backend.model.UsuarioModel;
+import sdpp_backend.model.enums.Perfil;
 import sdpp_backend.repository.ColaboradorRepository;
 import sdpp_backend.repository.UsuarioRepository;
 import sdpp_backend.security.AcessoService;
@@ -78,6 +79,12 @@ public class UsuarioService {
         if (usuario.getId().equals(acesso.atual().usuarioId()) && (!ativo || usuario.getPerfil() != req.perfil())) {
             throw new RegraNegocioException("Você não pode desativar nem alterar o perfil da sua própria conta.");
         }
+        var vinculado = colaboradorRepository.findByUsuarioId(usuario.getId());
+        boolean deixaDeGerir = !ativo || req.perfil() == Perfil.COLABORADOR
+                || vinculado.map(c -> !c.getId().equals(req.colaboradorId())).orElse(false);
+        if (deixaDeGerir) {
+            vinculado.ifPresent(this::exigirSemEquipeAtiva);
+        }
         usuario.setNome(req.nome().trim());
         usuario.setEmail(email);
         usuario.setPerfil(req.perfil());
@@ -87,7 +94,7 @@ public class UsuarioService {
             // Senha redefinida pelo RH: encerra as sessões abertas com a senha anterior
             usuario.revogarTokens();
         }
-        colaboradorRepository.findByUsuarioId(usuario.getId()).ifPresent(c -> {
+        vinculado.ifPresent(c -> {
             if (!c.getId().equals(req.colaboradorId())) {
                 c.setUsuario(null);
                 colaboradorRepository.saveAndFlush(c);
@@ -104,7 +111,17 @@ public class UsuarioService {
         if (usuario.getId().equals(acesso.atual().usuarioId())) {
             throw new RegraNegocioException("Você não pode desativar a sua própria conta.");
         }
+        colaboradorRepository.findByUsuarioId(usuario.getId()).ifPresent(this::exigirSemEquipeAtiva);
         usuario.setAtivo(false);
+    }
+
+    /** Sem acesso de Gestor/RH, a pessoa não consegue avaliar nem acompanhar a equipe que gere no cadastro. */
+    private void exigirSemEquipeAtiva(ColaboradorModel c) {
+        long equipe = colaboradorRepository.countByGestorIdAndAtivoTrue(c.getId());
+        if (equipe > 0) {
+            throw new RegraNegocioException(c.getNome() + " é gestor(a) responsável de " + equipe
+                    + " colaborador(es) ativo(s). Defina outro gestor para a equipe antes de remover o acesso de gestão.");
+        }
     }
 
     private void vincular(UsuarioModel usuario, Long colaboradorId) {
@@ -115,6 +132,13 @@ public class UsuarioService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Colaborador não encontrado."));
         if (colaborador.getUsuario() != null && !colaborador.getUsuario().getId().equals(usuario.getId())) {
             throw new ConflitoException("Este colaborador já possui uma conta de acesso.");
+        }
+        // O e-mail do cadastro acompanha o e-mail de acesso, para não divergirem
+        if (!colaborador.getEmail().equalsIgnoreCase(usuario.getEmail())) {
+            if (colaboradorRepository.existsByEmailIgnoreCase(usuario.getEmail())) {
+                throw new ConflitoException("Já existe outro colaborador com o e-mail " + usuario.getEmail() + ".");
+            }
+            colaborador.setEmail(usuario.getEmail());
         }
         colaborador.setUsuario(usuario);
     }

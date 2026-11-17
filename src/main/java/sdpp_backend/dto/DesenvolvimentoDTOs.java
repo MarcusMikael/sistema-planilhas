@@ -65,7 +65,8 @@ public final class DesenvolvimentoDTOs {
                               String cargoAtual, LocalDate dataAdmissao, Long gestorId, String gestorNome,
                               Long cicloId, String cicloNome, String cargoDesejado, String objetivo,
                               String habilidadesDesenvolver, String habilidadesSucesso, String anotacoes,
-                              StatusPDI status, LocalDate criadoEm, int progressoGeral, List<AcaoResponse> acoes) {
+                              StatusPDI status, LocalDate criadoEm, int progressoGeral, List<AcaoResponse> acoes,
+                              boolean podeEditar, boolean podeAtualizarProgresso) {
     }
 
     // ---------- Pesquisa de clima ----------

@@ -3,7 +3,7 @@ import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useAcao } from '../hooks.js';
 import { Alerta, Campo, Cartao, Pagina } from '../components/ui.jsx';
-import { ROTULOS } from '../format.js';
+import { ROTULOS, SENHA_DICA, SENHA_PADRAO } from '../format.js';
 
 export default function Conta() {
   const { usuario } = useAuth();
@@ -47,8 +47,8 @@ export default function Conta() {
             <Campo rotulo="Senha atual">
               <input type="password" value={atual} onChange={(e) => setAtual(e.target.value)} required autoComplete="current-password" />
             </Campo>
-            <Campo rotulo="Nova senha" dica="Mínimo de 6 caracteres">
-              <input type="password" value={nova} onChange={(e) => setNova(e.target.value)} required minLength={6} autoComplete="new-password" />
+            <Campo rotulo="Nova senha" dica={SENHA_DICA}>
+              <input type="password" value={nova} onChange={(e) => setNova(e.target.value)} required minLength={8} pattern={SENHA_PADRAO} title={SENHA_DICA} autoComplete="new-password" />
             </Campo>
             <Campo rotulo="Confirmar nova senha">
               <input type="password" value={confirma} onChange={(e) => setConfirma(e.target.value)} required autoComplete="new-password" />

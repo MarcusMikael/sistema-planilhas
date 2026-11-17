@@ -683,6 +683,57 @@ input[type='range'] {
   color: var(--aviso-texto);
 }
 
+.status-auto {
+  margin-right: auto;
+  align-self: center;
+}
+
+/* Esqueleto de carregamento */
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.esqueleto-linha {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--superficie-2) 25%, var(--borda) 50%, var(--superficie-2) 75%);
+  background-size: 200% 100%;
+  animation: brilho 1.4s ease-in-out infinite;
+}
+
+.esqueleto-titulo {
+  width: 35%;
+  height: 20px;
+  margin-bottom: 6px;
+}
+
+.esqueleto-curta {
+  width: 60%;
+}
+
+@keyframes brilho {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Texto só para leitores de tela */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .carregando {
   color: var(--texto-suave);
   padding: 28px;
@@ -1058,9 +1109,25 @@ tr.destaque-atencao td {
   display: flex;
   justify-content: space-between;
   gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
   font-weight: 600;
   font-size: 0.875rem;
   overflow-wrap: anywhere;
+}
+
+.quadro-titulo:hover,
+.quadro-titulo:disabled:hover {
+  background: none;
+  color: inherit;
+}
+
+.pessoa-chip {
+  line-height: 1.5;
 }
 
 .quadro-titulo> :last-child {
@@ -1260,6 +1327,192 @@ tr.destaque-atencao td {
     transform: translateX(32px);
     opacity: 0;
   }
+}
+
+/* ---------- Gráfico de comparação (gestor × autoavaliação) ---------- */
+.gc {
+  --gc-gestor: #059669;
+  --gc-auto: #6366f1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gc-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--texto-2);
+  margin-bottom: 4px;
+}
+
+.gc-legenda span,
+.gc-tooltip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gc-amostra {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.gc-gestor {
+  background: var(--gc-gestor);
+}
+
+.gc-auto {
+  background: var(--gc-auto);
+}
+
+.gc-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gc-grupo-titulo {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+  margin: 8px 0 2px;
+}
+
+.gc-linha {
+  display: grid;
+  grid-template-columns: minmax(110px, 200px) 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: var(--raio-controle);
+  outline: none;
+}
+
+.gc-linha.ativa,
+.gc-linha:focus-visible {
+  background: var(--superficie-2);
+}
+
+.gc-linha:focus-visible {
+  box-shadow: var(--foco);
+}
+
+.gc-rotulo {
+  font-size: 0.8125rem;
+  color: var(--texto-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Área das barras com grade discreta a cada ponto da escala (5 divisões) */
+.gc-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+  background-image: linear-gradient(to right, var(--borda) 1px, transparent 1px);
+  background-size: 20% 100%;
+  box-shadow: inset -1px 0 0 var(--borda);
+}
+
+.gc-barra {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  transition: width 0.3s;
+}
+
+.gc-vazia {
+  background: none;
+}
+
+.gc-tooltip {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: calc(100% + 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 190px;
+  padding: 8px 10px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-controle);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  font-size: 0.8125rem;
+  pointer-events: none;
+}
+
+.gc-tooltip b {
+  margin-left: auto;
+  padding-left: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gc-eixo .gc-area {
+  height: 16px;
+  background: none;
+  box-shadow: none;
+}
+
+.gc-eixo .gc-area span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.6875rem;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Mapa de calor ---------- */
+td.celula-calor {
+  border-bottom: 2px solid var(--superficie);
+  border-left: 2px solid var(--superficie);
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr:hover td.celula-calor {
+  filter: brightness(0.96);
+}
+
+.legenda-calor {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  color: var(--texto-2);
+}
+
+.legenda-calor i {
+  width: 22px;
+  height: 10px;
+  display: inline-block;
+}
+
+.legenda-calor > span:first-child {
+  margin-right: 6px;
+}
+
+.legenda-calor > span:nth-last-child(2) {
+  margin-left: 6px;
+}
+
+.legenda-calor-vazio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 16px;
+}
+
+.legenda-calor-vazio i {
+  background: var(--superficie-2);
+  border: 1px solid var(--borda);
 }
 
 /* ---------- Aviso de servidor acordando ---------- */

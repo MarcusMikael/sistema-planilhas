@@ -1,11 +1,25 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { LoaderCircle, X } from 'lucide-react';
 import { observarLentidao, servidorLento } from '../api.js';
-import { MSG_ALTERACOES, useAvisoSaida } from '../hooks.js';
+import { MSG_ALTERACOES, useAvisoSaida, useTituloAba } from '../hooks.js';
 import { ROTULOS, tomStatus } from '../format.js';
 
+const FOCAVEIS = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Esqueleto de carregamento: blocos no formato aproximado do conteúdo, para a tela não "pular" quando os
+ * dados chegam. O texto continua disponível para leitores de tela.
+ */
 export function Carregando({ texto = 'Carregando…' }) {
-  return <div className="carregando" role="status">{texto}</div>;
+  return (
+    <div className="esqueleto" role="status" aria-live="polite">
+      <span className="so-leitor">{texto}</span>
+      <div className="esqueleto-linha esqueleto-titulo" />
+      <div className="esqueleto-linha" />
+      <div className="esqueleto-linha" />
+      <div className="esqueleto-linha esqueleto-curta" />
+    </div>
+  );
 }
 
 /**
@@ -56,6 +70,7 @@ export function Badge({ status, grupo, children }) {
 }
 
 export function Pagina({ titulo, subtitulo, acoes, children }) {
+  useTituloAba(titulo);
   return (
     <section className="pagina">
       <header className="pagina-cabecalho">
@@ -106,10 +121,44 @@ export function Modal({ titulo, aberto, onFechar, children, largo }) {
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [aberto, fechar]);
+
+  // Foco: ao abrir, vai para o primeiro campo do modal; Tab e Shift+Tab circulam só dentro dele;
+  // ao fechar, volta para o elemento que abriu o modal (ex.: o botão "Editar").
+  const dialogo = useRef(null);
+  useEffect(() => {
+    if (!aberto) return undefined;
+    const origem = document.activeElement;
+    const focaveis = () => [...(dialogo.current?.querySelectorAll(FOCAVEIS) ?? [])]
+      .filter((el) => !el.disabled && el.offsetParent !== null);
+    const primeiroCampo = dialogo.current?.querySelector('.modal-corpo :is(input, select, textarea):not([disabled])');
+    (primeiroCampo ?? focaveis()[0])?.focus();
+    const prender = (e) => {
+      if (e.key !== 'Tab') return;
+      const lista = focaveis();
+      if (lista.length === 0) return;
+      const [primeiro, ultimo] = [lista[0], lista[lista.length - 1]];
+      if (!dialogo.current.contains(document.activeElement)) {
+        e.preventDefault();
+        primeiro.focus();
+      } else if (e.shiftKey && document.activeElement === primeiro) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primeiro.focus();
+      }
+    };
+    document.addEventListener('keydown', prender);
+    return () => {
+      document.removeEventListener('keydown', prender);
+      if (origem instanceof HTMLElement && document.contains(origem)) origem.focus();
+    };
+  }, [aberto]);
+
   if (!aberto) return null;
   return (
     <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && fechar()}>
-      <div className={`modal ${largo ? 'modal-largo' : ''}`} role="dialog" aria-modal="true" aria-label={titulo}
+      <div ref={dialogo} className={`modal ${largo ? 'modal-largo' : ''}`} role="dialog" aria-modal="true" aria-label={titulo}
         onInput={() => setSujo(true)} onChange={() => setSujo(true)} onSubmit={() => setSujo(false)}>
         <div className="modal-cabecalho">
           <h2>{titulo}</h2>

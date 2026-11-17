@@ -118,7 +118,10 @@ public final class AvaliacaoDTOs {
         public record QuadranteRequest(
                         @NotBlank(message = "Informe o rótulo") @Size(max = 100) String rotulo,
                         @NotBlank(message = "Informe a descrição") @Size(max = 500) String descricao,
-                        @NotNull(message = "Informe as ações sugeridas") List<@NotBlank String> acoes) {
+                        // até 10 ações de até 280 caracteres cabem na coluna plano_acao (3000)
+                        @NotNull(message = "Informe as ações sugeridas")
+                        @Size(min = 1, max = 10, message = "Informe de 1 a 10 ações sugeridas")
+                        List<@NotBlank @Size(max = 280, message = "Cada ação pode ter até 280 caracteres") String> acoes) {
         }
 
         public record NineBoxRequest(

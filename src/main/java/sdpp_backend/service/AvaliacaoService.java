@@ -1,9 +1,12 @@
 package sdpp_backend.service;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +73,9 @@ public class AvaliacaoService {
         ColaboradorModel eu = colaboradorRepository.findById(u.colaboradorId()).orElseThrow();
         for (CicloAvaliacaoModel ciclo : cicloRepository.findByStatusInOrderByDataInicioDesc(
                 List.of(StatusCiclo.LIBERADO))) {
+            if (!dentroDoPrazo(ciclo)) {
+                continue;
+            }
             lista.add(pendencia(ciclo, eu, TipoAvaliacao.AUTOAVALIACAO));
             if (u.podeGerirEquipe()) {
                 acesso.equipe(u).forEach(membro -> lista.add(pendencia(ciclo, membro, TipoAvaliacao.GESTOR)));
@@ -82,10 +88,12 @@ public class AvaliacaoService {
     @Transactional(readOnly = true)
     public List<AvaliacaoResponse> listar(Long cicloId) {
         UsuarioLogado u = acesso.atual();
-        return repository.findByCicloId(cicloId).stream()
-                .filter(a -> podeVer(u, a))
-                .map(a -> paraResponse(a, false))
-                .toList();
+        List<AvaliacaoModel> visiveis = repository.findByCicloId(cicloId).stream().filter(a -> podeVer(u, a)).toList();
+        // Uma única consulta para as notas de todas as avaliações (em vez de uma por avaliação)
+        Map<Long, List<PontuacaoModel>> notas = visiveis.isEmpty() ? Map.of()
+                : pontuacaoRepository.findByAvaliacaoIdIn(visiveis.stream().map(AvaliacaoModel::getId).toList())
+                        .stream().collect(Collectors.groupingBy(p -> p.getAvaliacao().getId()));
+        return visiveis.stream().map(a -> paraResponse(a, notas.getOrDefault(a.getId(), List.of()), false)).toList();
     }
 
     @Transactional(readOnly = true)
@@ -196,6 +204,10 @@ public class AvaliacaoService {
         if (!Objects.equals(u.colaboradorId(), a.getAvaliador().getId())) {
             throw new AcessoNegadoException("Somente o avaliador pode alterar esta avaliação.");
         }
+        // Se o gestor mudou no cadastro, quem avalia passa a ser o gestor atual
+        if (a.getTipo() == TipoAvaliacao.GESTOR && !acesso.ehGestorDe(u, a.getColaborador())) {
+            throw new AcessoNegadoException("Você não é mais o gestor responsável por este colaborador.");
+        }
         if (a.getStatus() == StatusAvaliacao.CONCLUIDA) {
             throw new RegraNegocioException("A avaliação já foi concluída.");
         }
@@ -203,11 +215,27 @@ public class AvaliacaoService {
         return a;
     }
 
+    /** Avaliações só com o ciclo liberado e dentro do período (início e término) definido pelo RH. */
     private void exigirCicloAberto(CicloAvaliacaoModel ciclo) {
         if (ciclo.getStatus() != StatusCiclo.LIBERADO) {
             throw new RegraNegocioException("O ciclo não está aberto para avaliações.");
         }
+        LocalDate hoje = LocalDate.now();
+        if (hoje.isBefore(ciclo.getDataInicio())) {
+            throw new RegraNegocioException("O ciclo só começa em " + DATA.format(ciclo.getDataInicio()) + ".");
+        }
+        if (hoje.isAfter(ciclo.getDataFim())) {
+            throw new RegraNegocioException("O prazo do ciclo terminou em " + DATA.format(ciclo.getDataFim())
+                    + ". Peça ao RH para prorrogar a data de término, se necessário.");
+        }
     }
+
+    private static boolean dentroDoPrazo(CicloAvaliacaoModel ciclo) {
+        LocalDate hoje = LocalDate.now();
+        return !hoje.isBefore(ciclo.getDataInicio()) && !hoje.isAfter(ciclo.getDataFim());
+    }
+
+    private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     // ---------- Montagem das respostas ----------
 
@@ -231,7 +259,10 @@ public class AvaliacaoService {
     }
 
     private AvaliacaoResponse paraResponse(AvaliacaoModel a, boolean comItens) {
-        List<PontuacaoModel> ps = pontuacoes(a.getId());
+        return paraResponse(a, pontuacoes(a.getId()), comItens);
+    }
+
+    private AvaliacaoResponse paraResponse(AvaliacaoModel a, List<PontuacaoModel> ps, boolean comItens) {
         int preenchidas = (int) ps.stream().filter(p -> p.getNota() != null).count();
         List<ItemAvaliacaoResponse> itens = !comItens ? null : ps.stream().map(p -> {
             var comp = p.getCicloCompetencia().getCompetencia();

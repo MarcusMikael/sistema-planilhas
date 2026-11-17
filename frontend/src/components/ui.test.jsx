@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { api, LIMITE_LENTO_MS } from '../api.js';
 import { mockFetch, resposta } from '../test/fetch.js';
-import { AvisoServidorLento, Badge, Modal, Progresso } from './ui.jsx';
+import { useState } from 'react';
+import { AvisoServidorLento, Badge, Carregando, Modal, Pagina, Progresso } from './ui.jsx';
 
 describe('Badge', () => {
   it('usa o rótulo do grupo e a cor do status', () => {
@@ -51,6 +52,43 @@ describe('AvisoServidorLento', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('Pagina e Carregando', () => {
+  it('define o título da aba do navegador', () => {
+    render(<Pagina titulo="Matriz Nine Box"><p>conteúdo</p></Pagina>);
+    expect(document.title).toBe('Matriz Nine Box · SDPP');
+  });
+
+  it('mostra o esqueleto com texto para leitores de tela', () => {
+    const { container } = render(<Carregando />);
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando…');
+    expect(container.querySelectorAll('.esqueleto-linha').length).toBeGreaterThan(0);
+  });
+});
+
+describe('Modal: foco', () => {
+  function Tela() {
+    const [aberto, setAberto] = useState(false);
+    return (
+      <>
+        <button onClick={() => setAberto(true)}>Abrir</button>
+        <Modal titulo="Editar" aberto={aberto} onFechar={() => setAberto(false)}>
+          <input aria-label="Nome" />
+        </Modal>
+      </>
+    );
+  }
+
+  it('leva o foco para o primeiro campo e devolve ao botão que abriu', async () => {
+    render(<Tela />);
+    const abrir = screen.getByRole('button', { name: 'Abrir' });
+    await userEvent.click(abrir);
+    expect(screen.getByLabelText('Nome')).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(abrir).toHaveFocus();
   });
 });
 

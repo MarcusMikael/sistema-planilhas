@@ -3,7 +3,7 @@ import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useAcao, useApi } from '../hooks.js';
 import { Alerta, Badge, Campo, Cartao, Carregando, Modal, Pagina, Seletor } from '../components/ui.jsx';
-import { ROTULOS } from '../format.js';
+import { ROTULOS, SENHA_DICA, SENHA_PADRAO } from '../format.js';
 
 const VAZIO = { nome: '', email: '', senha: '', perfil: 'COLABORADOR', ativo: true, colaboradorId: null };
 
@@ -14,6 +14,7 @@ export default function Usuarios() {
   const [editando, setEditando] = useState(null);
   const [form, setForm] = useState(VAZIO);
   const acao = useAcao();
+  const acaoLista = useAcao();
 
   function abrir(u) {
     acao.setErro(null);
@@ -46,7 +47,7 @@ export default function Usuarios() {
     <Pagina titulo="Usuários e acessos" subtitulo="Contas de acesso, perfis (RH, Gestor, Colaborador) e vínculo com o cadastro"
       acoes={<button className="btn-primario" onClick={() => abrir(null)}>+ Novo usuário</button>}>
       <Cartao>
-        <Alerta erro={lista.erro} />
+        <Alerta erro={lista.erro || acaoLista.erro} />
         {lista.carregando ? <Carregando /> : (
           <div className="tabela-wrap">
             <table>
@@ -63,9 +64,12 @@ export default function Usuarios() {
                       <button className="btn-texto" onClick={() => abrir(u)}>Editar</button>
                       {u.ativo && u.id !== usuario.id && (
                         <button className="btn-texto btn-perigo" onClick={async () => {
-                          if (window.confirm(`Desativar o acesso de ${u.nome}?`)) {
-                            await api.del(`/usuarios/${u.id}`);
+                          if (!window.confirm(`Desativar o acesso de ${u.nome}?`)) return;
+                          try {
+                            await acaoLista.executar(() => api.del(`/usuarios/${u.id}`));
                             lista.recarregar();
+                          } catch {
+                            /* exibido acima da lista */
                           }
                         }}>Desativar</button>
                       )}
@@ -92,8 +96,8 @@ export default function Usuarios() {
               <Seletor valor={form.perfil} onChange={set('perfil')} disabled={editando?.id === usuario.id}
                 opcoes={Object.entries(ROTULOS.perfil).map(([valor, rotulo]) => ({ valor, rotulo }))} />
             </Campo>
-            <Campo rotulo={editando?.id ? 'Nova senha (opcional)' : 'Senha inicial'} dica="Mínimo de 6 caracteres">
-              <input type="password" value={form.senha} minLength={6} required={!editando?.id} autoComplete="new-password"
+            <Campo rotulo={editando?.id ? 'Nova senha (opcional)' : 'Senha inicial'} dica={SENHA_DICA}>
+              <input type="password" value={form.senha} minLength={8} pattern={SENHA_PADRAO} title={SENHA_DICA} required={!editando?.id} autoComplete="new-password"
                 onChange={(e) => set('senha')(e.target.value)} />
             </Campo>
           </div>
