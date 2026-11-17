@@ -21,6 +21,8 @@ Arquitetura (SWEBOK)** da equipe.
 - [Regras de negócio e rastreabilidade](#regras-de-negócio-e-rastreabilidade)
 - [Decisões sobre pontos em aberto](#decisões-sobre-pontos-em-aberto)
 - [Equipe](#equipe)
+- [Como continuar este projeto](#como-continuar-este-projeto)
+- [Licença](#licença)
 
 ---
 
@@ -487,16 +489,53 @@ Os pontos em aberto (PA) do DRS que ainda não tinham definição foram resolvid
 
 ## Equipe
 
-<!-- Para completar: substitua "_a preencher_" pelo link do GitHub de cada integrante, no formato [@usuario](https://github.com/usuario). -->
+Equipe responsável por esta versão. O histórico de todas as equipes que trabalharam no projeto fica em
+[EQUIPES.md](EQUIPES.md).
 
-| Integrante | GitHub |
+| Campo | Informação |
 |---|---|
-| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) |
-| Marcos André dos Santos Soares | _a preencher_ |
-| Carlos Arthur Moraes Gonçalves | _a preencher_ |
-| João Pedro Lima Barbosa | _a preencher_ |
-| Rodofo Dheymison Ferreira Silva | _a preencher_ |
-| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ |
-| Enzo Morais Gonçalves | _a preencher_ |
+| **Período letivo** | 2026.2 |
+| **Turma** | 6º período |
+| **Disciplina** | Gestão de Pessoas |
+| **Curso e instituição** | Engenharia de Software – UNIFSA |
+| **Orientação** | Prof. Aluysio Fonseca |
 
-Orientação: professor Aluysio Fonseca · Disciplina Gestão de Pessoas · Engenharia de Software – UNIFSA, 2026.
+<!-- Para completar: substitua "_a preencher_" pelos links de cada integrante, nos formatos [@usuario](https://github.com/usuario) e [in/usuario](https://www.linkedin.com/in/usuario). -->
+
+| Integrante | GitHub | LinkedIn |
+|---|---|---|
+| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) | [in/Neeveszr](https://www.linkedin.com/in/Neeveszr) |
+| Marcos André dos Santos Soares | _a preencher_ | _a preencher_ |
+| Carlos Arthur Moraes Gonçalves | _a preencher_ | _a preencher_ |
+| João Pedro Lima Barbosa | _a preencher_ | _a preencher_ |
+| Rodolfo Dheymison Ferreira Silva | _a preencher_ | _a preencher_ |
+| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ | _a preencher_ |
+| Enzo Morais Gonçalves | _a preencher_ | _a preencher_ |
+
+---
+
+## Como continuar este projeto
+
+Para as próximas turmas que vão partir deste código:
+
+1. **Copie o repositório.** Prefira o botão *Fork* do GitHub, que mantém o vínculo com o original. Se clonar e
+   criar um repositório novo, cite o projeto de origem no README: https://github.com/MarcusMikael/sistema-planilhas.
+2. **Registre a sua equipe** no topo de [EQUIPES.md](EQUIPES.md) (há um modelo no fim do arquivo), sem remover
+   as anteriores, e atualize a seção [Equipe](#equipe) acima com período letivo, turma, disciplina, orientação e
+   integrantes.
+3. **Rode o projeto localmente** seguindo [Como executar](#como-executar) e confira os testes
+   ([Testes e integração contínua](#testes-e-integração-contínua)): o CI passa a rodar no seu repositório.
+4. **Publique a sua versão**, se for o caso, com novas contas na Vercel e no Render ([Deploy](#deploy)):
+   - troque o endereço do backend no proxy `/api` do `frontend/vercel.json`;
+   - gere um `SDPP_JWT_SECRET` novo e use um banco PostgreSQL próprio;
+   - atualize os links do sistema publicado e do selo do CI no topo deste README.
+5. **Revise os pontos em aberto** ([Decisões sobre pontos em aberto](#decisões-sobre-pontos-em-aberto)) com a
+   orientação do seu período antes de mudar regras.
+
+---
+
+## Licença
+
+Distribuído sob a [licença MIT](LICENSE): o código pode ser usado, modificado e redistribuído livremente, desde
+que o aviso de copyright e a licença sejam mantidos, o que preserva os créditos das equipes listadas em
+[EQUIPES.md](EQUIPES.md).
