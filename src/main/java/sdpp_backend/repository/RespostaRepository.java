@@ -10,6 +10,4 @@ import sdpp_backend.model.RespostaModel;
 public interface RespostaRepository extends JpaRepository<RespostaModel, UUID> {
 
     List<RespostaModel> findByPerguntaPesquisaId(Long pesquisaId);
-
-    boolean existsByPerguntaPesquisaId(Long pesquisaId);
 }
