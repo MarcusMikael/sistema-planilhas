@@ -163,7 +163,7 @@ Pare o backend, apague a pasta `data/` e suba de novo. O banco é recriado com o
 | Tela de login mostra "Não foi possível conectar ao servidor" | O backend não está no ar ou ainda está iniciando |
 | `npm` não é reconhecido | Node.js não instalado ou terminal aberto antes da instalação |
 | Login com "E-mail ou senha inválidos" | Confira a senha `sdpp123`. Se o banco foi criado por uma versão antiga, apague `data/` |
-| "Muitas tentativas de login sem sucesso" | 5 senhas erradas em 15 minutos bloqueiam a conta naquele navegador (ver [Segurança](#segurança)). Espere o tempo indicado ou entre de um navegador onde a conta já foi usada |
+| "Muitas tentativas de login sem sucesso" | 5 senhas erradas em 15 minutos bloqueiam a conta para navegadores desconhecidos; o navegador onde a pessoa já entrou continua liberado (ver [Segurança](#segurança)). Espere o tempo indicado ou entre de um navegador onde a conta já foi usada |
 | "Acordando o servidor…" no site publicado | O Render desligou o backend por falta de uso; o primeiro acesso leva até 1 minuto (ver [Deploy](#deploy)) |
 | Erros de banco depois de atualizar o código | O esquema mudou; apague `data/` (em desenvolvimento) |
 
@@ -221,12 +221,13 @@ Dados já carregados:
 
 | Conjunto | Comando | O que cobre |
 |---|---|---|
-| **Backend** (54 testes) | `./mvnw test` | Casos dourados de cálculo do DRS (Seção 6.1), critérios de aceitação de permissões e regras de negócio, limite de login, sessão por cookie e anonimato do clima. Usa H2 em memória |
-| **Frontend** (52 testes + lint) | `cd frontend`, depois `npm test` e `npm run lint` | Vitest + Testing Library: login, cabeçalho, gráficos, controle de notas, rascunho automático, modais (foco e alterações não salvas), aviso ao sair, Error Boundary, corrida de requisições no `useApi`, política de senha. ESLint com as regras de hooks do React |
-| **Ponta a ponta** (200 verificações) | `node scripts/e2e-api.mjs` | Ciclo completo com os três perfis, matriz de permissões, Nine Box, PDI, pesquisa de clima e cadastros, contra o servidor real |
+| **Backend** | `./mvnw test` | Casos dourados de cálculo do DRS (Seção 6.1), critérios de aceitação de permissões e regras de negócio, limite de login, sessão por cookie e anonimato do clima. Usa H2 em memória |
+| **Frontend** (testes e lint) | `cd frontend`, depois `npm test` e `npm run lint` | Vitest + Testing Library: login, cabeçalho, gráficos, controle de notas, rascunho automático, modais (foco e alterações não salvas), aviso ao sair, Error Boundary, corrida de requisições no `useApi`, política de senha. ESLint com as regras de hooks do React |
+| **Ponta a ponta** | `node scripts/e2e-api.mjs` | Ciclo completo com os três perfis, matriz de permissões, Nine Box, PDI, pesquisa de clima e cadastros, contra o servidor real |
 
 O roteiro ponta a ponta precisa do backend no ar com o banco de demonstração recém-criado (apague `data/` e
-reinicie o backend antes).
+reinicie o backend antes). Cada comando mostra ao final quantos testes ou verificações rodaram e quantos falharam;
+os totais atualizados também aparecem em cada execução do CI.
 
 **Integração contínua.** O GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda os três
 conjuntos em todo pull request e em cada push na `main`; o roteiro ponta a ponta sobe o backend real com os dados
@@ -286,7 +287,7 @@ sistema-planilhas/
 └── frontend/
     ├── src/pages/                    Telas (painel, avaliações, Nine Box, PDI, clima...) e seus testes
     ├── src/components/               Layout, cabeçalho, gráficos e componentes de interface
-    ├── src/api.js, auth.jsx, hooks.js Cliente da API, sessão do usuário e hooks compartilhados
+    ├── src/api, auth, hooks          Cliente da API (api.js), sessão do usuário (auth.jsx) e hooks (hooks.js)
     ├── eslint.config.js              Regras de lint
     └── vite.config.js, vercel.json   Servidor de desenvolvimento, testes e deploy (proxy e cabeçalhos)
 ```
@@ -359,8 +360,10 @@ No painel do Render, use `/api/saude` como *Health Check Path* (rota pública e 
 - diretório raiz: `frontend`; comando de build: `npm run build`; pasta de saída: `dist`;
 - **não** defina `VITE_API_URL`: o frontend chama `/api` no próprio domínio.
 
-O `vercel.json` repassa `/api` ao backend (`sistema-planilhas-najb.onrender.com`; se o serviço mudar de
-endereço, atualize-o ali), redireciona as demais rotas para o `index.html` e define os cabeçalhos de segurança.
+O `vercel.json` repassa `/api` ao backend, redireciona as demais rotas para o `index.html` e define os cabeçalhos
+de segurança. O destino do proxy é o endereço do backend no Render: na versão da equipe fundadora,
+`sistema-planilhas-najb.onrender.com`. Quem publicar outra versão (ou mudar o serviço de endereço) precisa
+trocá-lo ali.
 Com o proxy, o cookie de sessão funciona em todos os navegadores, inclusive Safari e iPhone, que bloqueiam
 cookies entre domínios diferentes.
 
@@ -381,7 +384,8 @@ No plano gratuito, o Render desliga o backend depois de cerca de 15 minutos sem 
   ficar pronto caiu de cerca de 9,3 s para 4,9 s.
 
 Para eliminar a espera: use uma instância paga ou, perto de apresentações, um serviço de ping gratuito (por
-exemplo, UptimeRobot) chamando `https://sistema-planilhas-najb.onrender.com/api/saude` a cada 10 minutos.
+exemplo, UptimeRobot) chamando `https://<seu-backend>.onrender.com/api/saude` a cada 10 minutos (na versão da
+equipe fundadora, `https://sistema-planilhas-najb.onrender.com/api/saude`).
 
 ### Banco de dados em produção
 
@@ -526,7 +530,7 @@ Para as próximas turmas que vão partir deste código:
 3. **Rode o projeto localmente** seguindo [Como executar](#como-executar) e confira os testes
    ([Testes e integração contínua](#testes-e-integração-contínua)): o CI passa a rodar no seu repositório.
 4. **Publique a sua versão**, se for o caso, com novas contas na Vercel e no Render ([Deploy](#deploy)):
-   - troque o endereço do backend no proxy `/api` do `frontend/vercel.json`;
+   - troque o endereço do backend no proxy `/api` do `frontend/vercel.json` (e no serviço de ping, se usar um);
    - gere um `SDPP_JWT_SECRET` novo e use um banco PostgreSQL próprio;
    - decida se mantém as [contas de demonstração](#contas-de-demonstração) (`SDPP_SEED_DEMO`); com a senha
      pública, só faz sentido para apresentar o sistema;
