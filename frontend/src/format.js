@@ -64,3 +64,7 @@ export function tomStatus(status) {
       return 'aviso';
   }
 }
+
+// Política de senha (a mesma do backend): ao menos 8 caracteres, com letras e números.
+export const SENHA_PADRAO = '(?=.*[A-Za-zÀ-ÿ])(?=.*[0-9]).{8,}';
+export const SENHA_DICA = 'Mínimo de 8 caracteres, com letras e números';

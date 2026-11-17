@@ -90,16 +90,22 @@ export default function NineBox() {
               {['ALTO', 'MEDIO', 'BAIXO'].map((p) => ['BAIXO', 'MEDIO', 'ALTO'].map((d) => {
                 const q = quadranteDe(d, p);
                 return (
-                  <div key={d + p} className={`quadro ${cor(d, p)}`} role="button" tabIndex={0}
-                    onClick={() => setQuadrante(q)} onKeyDown={(e) => e.key === 'Enter' && setQuadrante(q)}>
-                    <div className="quadro-titulo"><span>{q?.rotulo}</span><span>{pessoasEm(d, p).length}</span></div>
+                  // O clique em qualquer ponto do quadro abre o quadrante (mouse); pelo teclado, o título e cada
+                  // pessoa são botões de verdade (Tab, Enter e Espaço)
+                  <div key={d + p} className={`quadro ${cor(d, p)}`} onClick={() => setQuadrante(q)}>
+                    <button type="button" className="quadro-titulo"
+                      aria-label={`${q?.rotulo}: ${pessoasEm(d, p).length} pessoa(s). Ver descrição e plano de ação`}
+                      onClick={(e) => { e.stopPropagation(); setQuadrante(q); }}>
+                      <span>{q?.rotulo}</span><span>{pessoasEm(d, p).length}</span>
+                    </button>
                     <div className="quadro-eixos">Desempenho {ROTULOS.nivel[d].toLowerCase()} · Potencial {ROTULOS.nivel[p].toLowerCase()}</div>
                     <div className="quadro-pessoas">
                       {pessoasEm(d, p).map((i) => (
-                        <span key={i.colaboradorId} className="pessoa-chip" title={`${i.cargo} · ${i.departamento}`}
+                        <button type="button" key={i.colaboradorId} className="pessoa-chip" title={`${i.cargo} · ${i.departamento}`}
+                          aria-label={podeRegistrar(i) ? `${i.colaboradorNome}: alterar classificação` : `${i.colaboradorNome} (${q?.rotulo})`}
                           onClick={(e) => { e.stopPropagation(); if (podeRegistrar(i)) abrirRegistro(i); else setQuadrante(q); }}>
                           {i.colaboradorNome}
-                        </span>
+                        </button>
                       ))}
                     </div>
                   </div>

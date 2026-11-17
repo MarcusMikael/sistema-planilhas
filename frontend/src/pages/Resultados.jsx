@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../hooks.js';
 import { Alerta, Badge, Campo, Cartao, Carregando, Indicador, Pagina, Seletor, Vazio } from '../components/ui.jsx';
+import { GraficoComparacao } from '../components/graficos.jsx';
 import { ROTULOS, fmtNum } from '../format.js';
 
 function Medias({ titulo, m }) {
@@ -75,6 +76,9 @@ export default function Resultados() {
                 <Medias titulo="Avaliação do gestor" m={r.gestor} />
                 <Medias titulo="Autoavaliação" m={r.autoavaliacao} />
               </div>
+              <Cartao titulo="Gestor × autoavaliação por competência">
+                <GraficoComparacao itens={r.itens} />
+              </Cartao>
               <Cartao titulo="Comparação por competência">
                 <div className="tabela-wrap">
                   <table>

@@ -44,11 +44,41 @@ class SdppBackendApplicationTests {
     // ---------- Apoio ----------
 
     private String token(String email) throws Exception {
+        return tokenCom(email, DataInitializer.SENHA_DEMO);
+    }
+
+    private String tokenCom(String email, String senha) throws Exception {
         String body = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"senha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
+                        .content("{\"email\":\"" + email + "\",\"senha\":\"" + senha + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return JsonPath.read(body, "$.token");
+    }
+
+    /** Cria uma conta de acesso pelo RH; colaboradorId pode ser nulo. Devolve o id do usuário. */
+    private Integer criarUsuario(String email, String senha, String perfil, Long colaboradorId) throws Exception {
+        String resp = json("rh@sdpp.local", post("/api/usuarios").content("{\"nome\":\"Teste\",\"email\":\"" + email
+                + "\",\"senha\":\"" + senha + "\",\"perfil\":\"" + perfil + "\",\"colaboradorId\":" + colaboradorId + "}"));
+        return JsonPath.read(resp, "$.id");
+    }
+
+    /** Cria um colaborador pelo RH e devolve o id. */
+    private Long criarColaborador(String nome, String email, Long gestorId) throws Exception {
+        String depts = json("rh@sdpp.local", get("/api/departamentos"));
+        String cargos = json("rh@sdpp.local", get("/api/cargos"));
+        String resp = json("rh@sdpp.local", post("/api/colaboradores").content("{\"nome\":\"" + nome + "\",\"email\":\""
+                + email + "\",\"cargoId\":" + JsonPath.read(cargos, "$[0].id") + ",\"departamentoId\":"
+                + JsonPath.read(depts, "$[0].id") + ",\"gestorId\":" + gestorId + ",\"dataAdmissao\":\"2024-01-10\"}"));
+        return ((Number) JsonPath.read(resp, "$.id")).longValue();
+    }
+
+    /** Corpo de PUT /api/colaboradores/{id} a partir do cadastro atual, trocando o gestor e/ou o e-mail. */
+    private String corpoColaborador(Long id, Long novoGestor, String novoEmail) throws Exception {
+        String c = json("rh@sdpp.local", get("/api/colaboradores/" + id));
+        return "{\"nome\":\"" + JsonPath.read(c, "$.nome") + "\",\"email\":\""
+                + (novoEmail != null ? novoEmail : JsonPath.read(c, "$.email")) + "\",\"cargoId\":"
+                + JsonPath.read(c, "$.cargoId") + ",\"departamentoId\":" + JsonPath.read(c, "$.departamentoId")
+                + ",\"gestorId\":" + novoGestor + ",\"dataAdmissao\":\"" + JsonPath.read(c, "$.dataAdmissao") + "\"}";
     }
 
     private MockHttpServletRequestBuilder como(String email, MockHttpServletRequestBuilder req) throws Exception {
@@ -141,21 +171,17 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("Trocar a senha invalida os tokens anteriores e devolve um token novo")
     void trocaDeSenhaRevogaTokens() throws Exception {
-        String antigo = token("pedro@sdpp.local");
+        criarUsuario("troca.teste@sdpp.local", "Inicial123", "COLABORADOR", null);
+        String antigo = tokenCom("troca.teste@sdpp.local", "Inicial123");
         String resp = mvc.perform(post("/api/auth/senha").header("Authorization", "Bearer " + antigo)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"senhaAtual\":\"" + DataInitializer.SENHA_DEMO + "\",\"novaSenha\":\"nova-senha-1\"}"))
+                        .content("{\"senhaAtual\":\"Inicial123\",\"novaSenha\":\"Trocada456\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         String novo = JsonPath.read(resp, "$.token");
         mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + antigo))
                 .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + novo))
-                .andExpect(status().isOk());
-        // Restaura a senha de demonstração para os demais testes
-        mvc.perform(post("/api/auth/senha").header("Authorization", "Bearer " + novo)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"senhaAtual\":\"nova-senha-1\",\"novaSenha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
                 .andExpect(status().isOk());
     }
 
@@ -510,9 +536,8 @@ class SdppBackendApplicationTests {
                 + JsonPath.read(cargos, "$[0].id") + ",\"departamentoId\":" + JsonPath.read(depts, "$[0].id")
                 + ",\"dataAdmissao\":\"2025-05-05\"}";
         Integer id = JsonPath.read(json("rh@sdpp.local", post("/api/colaboradores").content(corpo)), "$.id");
-        json("rh@sdpp.local", post("/api/usuarios").content("{\"nome\":\"Temporario\",\"email\":\"temp@sdpp.local\","
-                + "\"senha\":\"" + DataInitializer.SENHA_DEMO + "\",\"perfil\":\"COLABORADOR\",\"colaboradorId\":" + id + "}"));
-        String tokenTemp = token("temp@sdpp.local");
+        criarUsuario("temp@sdpp.local", "Temporario1", "COLABORADOR", id.longValue());
+        String tokenTemp = tokenCom("temp@sdpp.local", "Temporario1");
         mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + tokenTemp))
                 .andExpect(jsonPath("$.colaboradorId").value(id));
 
@@ -520,7 +545,7 @@ class SdppBackendApplicationTests {
         mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + tokenTemp))
                 .andExpect(status().isUnauthorized());
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"temp@sdpp.local\",\"senha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
+                        .content("{\"email\":\"temp@sdpp.local\",\"senha\":\"Temporario1\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -532,6 +557,156 @@ class SdppBackendApplicationTests {
         }
         mvc.perform(como("gestor@sdpp.local", post("/api/pesquisas-clima/1/respostas").content("{}")))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ---------- Consistência de gestores, ciclos e cadastros ----------
+
+    @Test
+    @DisplayName("Gestor precisa de acesso Gestor/RH; quem gere equipe ativa não perde o acesso nem é desativado")
+    void regrasDeGestor() throws Exception {
+        Long semAcesso = criarColaborador("Sem Acesso", "sem.acesso@sdpp.local", null);
+        Long liderado = criarColaborador("Liderado", "liderado@sdpp.local", null);
+        mvc.perform(como("rh@sdpp.local", put("/api/colaboradores/" + liderado)
+                        .content(corpoColaborador(liderado, semAcesso, null))))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.containsString("perfil Gestor ou RH")));
+
+        Long carlos = idColaborador("Carlos Lima");
+        mvc.perform(como("rh@sdpp.local", delete("/api/colaboradores/" + carlos)))
+                .andExpect(status().isUnprocessableContent());
+
+        String usuarios = json("rh@sdpp.local", get("/api/usuarios"));
+        Integer contaCarlos = JsonPath.<List<Integer>>read(usuarios, "$[?(@.email == 'gestor@sdpp.local')].id").get(0);
+        mvc.perform(como("rh@sdpp.local", put("/api/usuarios/" + contaCarlos).content("{\"nome\":\"Carlos Lima\","
+                        + "\"email\":\"gestor@sdpp.local\",\"perfil\":\"COLABORADOR\",\"colaboradorId\":" + carlos + "}")))
+                .andExpect(status().isUnprocessableContent());
+        mvc.perform(como("rh@sdpp.local", delete("/api/usuarios/" + contaCarlos)))
+                .andExpect(status().isUnprocessableContent());
+    }
+
+    @Test
+    @DisplayName("Trocar o gestor durante o ciclo descarta o rascunho do gestor anterior; o novo avalia do zero")
+    void trocaDeGestorDuranteOCiclo() throws Exception {
+        Long ciclo = idCiclo("Ciclo 2026/1");
+        Long beatriz = idColaborador("Beatriz Alves");
+        Long carlos = idColaborador("Carlos Lima");
+        Long ana = idColaborador("Ana Souza");
+        String abrir = "{\"cicloId\":" + ciclo + ",\"colaboradorId\":" + beatriz + ",\"tipo\":\"GESTOR\"}";
+        String rascunho = json("gestor@sdpp.local", post("/api/avaliacoes").content(abrir));
+        Integer idRascunho = JsonPath.read(rascunho, "$.id");
+        Integer cc = JsonPath.read(rascunho, "$.itens[0].cicloCompetenciaId");
+        json("gestor@sdpp.local", put("/api/avaliacoes/" + idRascunho + "/notas")
+                .content("{\"notas\":[{\"cicloCompetenciaId\":" + cc + ",\"nota\":3}]}"));
+        try {
+            json("rh@sdpp.local", put("/api/colaboradores/" + beatriz).content(corpoColaborador(beatriz, ana, null)));
+            mvc.perform(como("gestor@sdpp.local", put("/api/avaliacoes/" + idRascunho + "/notas")
+                            .content("{\"notas\":[]}")))
+                    .andExpect(status().isNotFound());
+            mvc.perform(como("rh@sdpp.local", post("/api/avaliacoes").content(abrir)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.avaliadorNome").value("Ana Souza"))
+                    .andExpect(jsonPath("$.notasPreenchidas").value(0));
+        } finally {
+            json("rh@sdpp.local", put("/api/colaboradores/" + beatriz).content(corpoColaborador(beatriz, carlos, null)));
+        }
+    }
+
+    @Test
+    @DisplayName("Avaliações só dentro do período do ciclo")
+    void prazoDoCiclo() throws Exception {
+        String ciclo = json("rh@sdpp.local", post("/api/ciclos")
+                .content("{\"nome\":\"Ciclo Vencido\",\"dataInicio\":\"2021-01-01\",\"dataFim\":\"2021-02-01\"}"));
+        Integer id = JsonPath.read(ciclo, "$.id");
+        String catalogo = json("rh@sdpp.local", get("/api/competencias"));
+        List<Integer> sel = new ArrayList<>(JsonPath.<List<Integer>>read(catalogo, "$[?(@.tipo == 'COMPORTAMENTAL')].id")
+                .subList(0, 5));
+        sel.addAll(JsonPath.<List<Integer>>read(catalogo, "$[?(@.tipo == 'TECNICA')].id").subList(0, 5));
+        json("rh@sdpp.local", put("/api/ciclos/" + id + "/competencias").content(ids(sel)));
+        json("rh@sdpp.local", post("/api/ciclos/" + id + "/liberar"));
+
+        mvc.perform(como("marina@sdpp.local", post("/api/avaliacoes").content("{\"cicloId\":" + id
+                        + ",\"colaboradorId\":" + idColaborador("Marina Oliveira") + ",\"tipo\":\"AUTOAVALIACAO\"}")))
+                .andExpect(status().isUnprocessableContent())
+                .andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.containsString("prazo")));
+        String pend = json("marina@sdpp.local", get("/api/avaliacoes/pendentes"));
+        org.assertj.core.api.Assertions.assertThat(JsonPath.<List<String>>read(pend, "$[*].cicloNome"))
+                .doesNotContain("Ciclo Vencido");
+    }
+
+    @Test
+    @DisplayName("Senhas novas: ao menos 8 caracteres, com letras e números")
+    void politicaDeSenha() throws Exception {
+        for (String fraca : List.of("abcdefgh", "12345678", "abc123")) {
+            mvc.perform(como("rh@sdpp.local", post("/api/usuarios").content("{\"nome\":\"X\",\"email\":\"fraca@sdpp.local\","
+                            + "\"senha\":\"" + fraca + "\",\"perfil\":\"COLABORADOR\"}")))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.campos.senha").exists());
+        }
+    }
+
+    @Test
+    @DisplayName("Quadrante: no máximo 10 ações sugeridas de até 280 caracteres")
+    void limitesDoQuadrante() throws Exception {
+        String quadrantes = json("rh@sdpp.local", get("/api/nine-box/quadrantes"));
+        Integer id = JsonPath.read(quadrantes, "$[0].id");
+        String onze = java.util.stream.IntStream.range(0, 11).mapToObj(i -> "\"acao " + i + "\"")
+                .collect(Collectors.joining(","));
+        mvc.perform(como("rh@sdpp.local", put("/api/nine-box/quadrantes/" + id)
+                        .content("{\"rotulo\":\"X\",\"descricao\":\"Y\",\"acoes\":[" + onze + "]}")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PDI informa as permissões do usuário atual, seguindo o gestor atual do colaborador")
+    void permissoesDoPdi() throws Exception {
+        String lista = json("joana@sdpp.local", get("/api/pdis"));
+        Integer pdi = JsonPath.read(lista, "$[0].id");
+        mvc.perform(como("joana@sdpp.local", get("/api/pdis/" + pdi)))
+                .andExpect(jsonPath("$.podeEditar").value(false))
+                .andExpect(jsonPath("$.podeAtualizarProgresso").value(true))
+                .andExpect(jsonPath("$.gestorNome").value("Carlos Lima"));
+        mvc.perform(como("gestor@sdpp.local", get("/api/pdis/" + pdi)))
+                .andExpect(jsonPath("$.podeEditar").value(true));
+        mvc.perform(como("marina@sdpp.local", get("/api/pdis/" + pdi))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Navegador onde a pessoa já entrou não é bloqueado por tentativas erradas vindas de outro lugar")
+    void dispositivoConfiavel() throws Exception {
+        criarUsuario("dispositivo@sdpp.local", "Dispositivo1", "COLABORADOR", null);
+        String certo = "{\"email\":\"dispositivo@sdpp.local\",\"senha\":\"Dispositivo1\"}";
+        var cookie = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(certo))
+                .andExpect(status().isOk()).andReturn().getResponse().getCookie(CookieSessao.NOME_DISPOSITIVO);
+        org.assertj.core.api.Assertions.assertThat(cookie).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(cookie.isHttpOnly()).isTrue();
+
+        String errado = "{\"email\":\"dispositivo@sdpp.local\",\"senha\":\"Chute0000\"}";
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(errado))
+                    .andExpect(status().isUnauthorized());
+        }
+        // De um navegador desconhecido, a conta fica bloqueada...
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(certo))
+                .andExpect(status().isTooManyRequests());
+        // ...e um cookie de dispositivo adulterado não serve para escapar do bloqueio...
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(certo)
+                        .cookie(new jakarta.servlet.http.Cookie(CookieSessao.NOME_DISPOSITIVO, cookie.getValue() + "x")))
+                .andExpect(status().isTooManyRequests());
+        // ...mas o dono, no navegador onde já entrou, continua entrando (e o login certo zera o bloqueio)
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(certo)
+                        .cookie(new jakarta.servlet.http.Cookie(CookieSessao.NOME_DISPOSITIVO, cookie.getValue())))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(certo))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("E-mail do cadastro e e-mail de acesso andam juntos")
+    void emailSincronizado() throws Exception {
+        Long id = criarColaborador("Email Antigo", "email.antigo@sdpp.local", null);
+        criarUsuario("email.antigo@sdpp.local", "Sincroniza1", "COLABORADOR", id);
+        json("rh@sdpp.local", put("/api/colaboradores/" + id).content(corpoColaborador(id, null, "email.novo@sdpp.local")));
+        tokenCom("email.novo@sdpp.local", "Sincroniza1");
     }
 
     @Test

@@ -212,7 +212,7 @@ cd frontend && npm run build                 # gera frontend/dist (arquivos est�
 
 ## Testes
 
-**Testes automatizados do backend.** São 43 testes: os casos dourados de cálculo do DRS (Seção 6.1) e os
+**Testes automatizados do backend.** São 54 testes: os casos dourados de cálculo do DRS (Seção 6.1) e os
 critérios de aceitação de permissões e regras de negócio. Usam um banco H2 em memória.
 
 ```bash
@@ -232,7 +232,7 @@ Requer o backend no ar com o banco de demonstração recém-criado (apague `data
 node scripts/e2e-api.mjs
 ```
 
-**Testes e lint do frontend.** Vitest + Testing Library (30 testes: login por cookie, aviso de servidor lento, controle de notas,
+**Testes e lint do frontend.** Vitest + Testing Library (46 testes: gráficos, foco nos modais, rascunho automático, política de senha, login por cookie, aviso de servidor lento, controle de notas,
 modal com alterações não salvas, aviso ao sair da página, Error Boundary e corrida de requisições no `useApi`)
 e ESLint com as regras de hooks do React.
 
@@ -320,6 +320,21 @@ O `vercel.json` faz duas coisas:
 
 ### Sessão
 
+**Senhas novas** precisam de ao menos 8 caracteres, com letras e números (as contas de demonstração mantêm
+`sdpp123`, pois são criadas direto no banco).
+
+**Limite de tentativas de login** (contadores no banco, não zeram quando o Render reinicia):
+
+- de um navegador desconhecido: 5 senhas erradas em 15 minutos bloqueiam a conta, e 50 erradas no total
+  (em qualquer conta) bloqueiam novos navegadores, contra quem testa uma senha comum em muitas contas;
+- o navegador onde a pessoa já entrou recebe um cookie de dispositivo assinado (`sdpp_dispositivo`, 180 dias)
+  e tem contador próprio: alguém errando a senha de propósito em outro lugar não bloqueia o dono da conta.
+  **Dica para a apresentação:** entre uma vez com cada conta no computador que será usado, antes de começar.
+
+**Cabeçalhos de segurança** (`vercel.json`): Content-Security-Policy restritiva, `X-Frame-Options: DENY`,
+`nosniff`, `Referrer-Policy` e `Permissions-Policy`.
+
+
 O login grava o token em um cookie `HttpOnly` (`sdpp_sessao`, `SameSite=Lax`, `Secure` em produção): o
 JavaScript da página não tem acesso a ele, então um eventual XSS não consegue roubar a sessão. Requisições que
 alteram dados com autenticação por cookie exigem o cabeçalho `X-SDPP-CSRF` (proteção contra CSRF), que o
@@ -343,6 +358,22 @@ Para eliminar a espera de vez: use uma instância paga do Render (não desliga) 
 configure um serviço de ping gratuito (por exemplo, UptimeRobot) para chamar
 `https://sistema-planilhas-najb.onrender.com/api/saude` a cada 10 minutos. Um único serviço ligado o mês inteiro cabe
 nas horas gratuitas do Render, mas é um contorno que o próprio Render não recomenda.
+
+### Banco de dados em produção
+
+- **Backup:** o PostgreSQL gratuito do Render não tem backup automático e tem prazo de validade (confira a data
+  no painel do Render). Antes de apresentações e de mudanças grandes, gere uma cópia com a *External Database
+  URL* do painel:
+
+  ```bash
+  pg_dump "URL_EXTERNA_DO_BANCO" --no-owner --format=custom --file=sdpp-backup.dump
+  ```
+
+  Para restaurar em um banco novo: `pg_restore --no-owner --dbname "URL_DO_BANCO_NOVO" sdpp-backup.dump`.
+- **Esquema:** o Hibernate atualiza as tabelas sozinho (`ddl-auto=update`): cria tabelas e colunas novas, mas
+  nunca apaga nem altera colunas existentes. Mudanças desse tipo (renomear, mudar tipo, remover) exigem SQL
+  manual no banco. Se o projeto continuar depois da disciplina, o próximo passo é adotar migrações versionadas
+  (Flyway) gerando a primeira a partir do esquema real de produção.
 
 > **Risco R-01 (Arquitetura 7.2):** a Vercel não executa Java. A proposta é publicar o frontend na Vercel e o
 > backend em uma plataforma com JVM ou contêiner (Render, Railway, Fly.io etc.). Confirmar com o professor.
@@ -374,7 +405,7 @@ Todas as rotas ficam em `/api` e, exceto `POST /api/auth/login`, exigem o cabeç
 | `/api/avaliacoes` | `pendentes`, abrir, `/{id}/notas`, `/{id}/concluir` |
 | `/api/nine-box` | matriz por ciclo, registro do gestor, `quadrantes` |
 | `/api/pdis`, `/api/acoes-pdi` | PDI e ações; `PATCH /acoes-pdi/{id}/progresso` |
-| `/api/auth` | `login` (5 senhas erradas em 15 min bloqueiam o e-mail: HTTP 429), `me`, `senha` (devolve um token novo e invalida os anteriores) |
+| `/api/auth` | `login` (limite de tentativas: HTTP 429, ver *Sessão*), `logout`, `me`, `senha` (devolve um token novo e invalida os anteriores) |
 | `/api/pesquisas-clima` | campanhas, perguntas, `publicar`, `encerrar`, `respostas`, `resultados` (só agregados e só depois de encerrar) |
 | `/api/indicadores` | indicadores no escopo do perfil |
 

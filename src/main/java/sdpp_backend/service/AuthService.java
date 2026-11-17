@@ -45,18 +45,21 @@ public class AuthService {
         this.hashFicticio = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
+    /**
+     * @param dispositivo id do navegador confiável para este e-mail (cookie de dispositivo), ou null
+     */
     @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest req) {
+    public LoginResponse login(LoginRequest req, String dispositivo) {
         String email = req.email().trim();
-        limite.verificar(email);
+        limite.verificar(email, dispositivo);
         UsuarioModel usuario = usuarioRepository.findByEmailIgnoreCase(email).orElse(null);
         // Sem conta, compara com um hash fictício para o tempo de resposta não revelar quais e-mails existem
         boolean senhaOk = passwordEncoder.matches(req.senha(), usuario == null ? hashFicticio : usuario.getSenha());
         if (usuario == null || !senhaOk || !Boolean.TRUE.equals(usuario.getAtivo())) {
-            limite.registrarFalha(email);
+            limite.registrarFalha(email, dispositivo);
             throw new CredenciaisInvalidasException("E-mail ou senha inválidos.");
         }
-        limite.registrarSucesso(email);
+        limite.registrarSucesso(email, dispositivo);
         Long colaboradorId = colaboradorRepository.findByUsuarioId(usuario.getId()).map(c -> c.getId()).orElse(null);
         var logado = new UsuarioLogado(usuario.getId(), usuario.getNome(), usuario.getEmail(),
                 usuario.getPerfil(), colaboradorId);
@@ -81,7 +84,9 @@ public class AuthService {
     }
 
     private UsuarioAtualResponse paraResponse(UsuarioLogado u) {
-        boolean temEquipe = u.colaboradorId() != null && colaboradorRepository.existsByGestorId(u.colaboradorId());
+        // Só conta como "tem equipe" quem pode geri-la (perfil Gestor ou RH)
+        boolean temEquipe = u.podeGerirEquipe() && u.colaboradorId() != null
+                && colaboradorRepository.existsByGestorId(u.colaboradorId());
         return new UsuarioAtualResponse(u.usuarioId(), u.nome(), u.email(), u.perfil(), u.colaboradorId(), temEquipe);
     }
 }

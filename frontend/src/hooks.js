@@ -65,6 +65,13 @@ export function useAcao() {
   return { enviando, erro, setErro, executar };
 }
 
+/** Título da aba do navegador: "Tela · SDPP" (ajuda no histórico, nas abas e em leitores de tela). */
+export function useTituloAba(titulo) {
+  useEffect(() => {
+    if (typeof titulo === 'string' && titulo) document.title = `${titulo} · SDPP`;
+  }, [titulo]);
+}
+
 export const MSG_ALTERACOES = 'Há alterações não salvas. Sair mesmo assim e descartá-las?';
 
 // Telas e modais com alterações pendentes (id → mensagem). O React Router consulta só um bloqueador

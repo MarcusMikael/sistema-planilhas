@@ -1,7 +1,7 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../auth.jsx';
 import { mockFetch, resposta } from '../test/fetch.js';
 import AvaliacaoForm from './AvaliacaoForm.jsx';
@@ -31,6 +31,46 @@ function montar() {
   render(<AuthProvider><RouterProvider router={router} /></AuthProvider>);
   return fetch;
 }
+
+describe('AvaliacaoForm: rascunho automático', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('salva sozinho 3 s depois da última alteração, sem perder o que foi editado durante o envio', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const usuario = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let responderPut;
+    const fetch = mockFetch({
+      'GET /auth/me': resposta(200, { nome: 'Carlos Lima', perfil: 'GESTOR', colaboradorId: 2 }),
+      'GET /avaliacoes/8': resposta(200, avaliacao),
+      'PUT /avaliacoes/8/notas': () => new Promise((ok) => { responderPut = ok; }),
+    });
+    const router = createMemoryRouter([{ path: '/avaliacoes/:id', element: <AvaliacaoForm /> }],
+      { initialEntries: ['/avaliacoes/8'] });
+    render(<AuthProvider><RouterProvider router={router} /></AuthProvider>);
+
+    const comunicacao = await screen.findByRole('radiogroup', { name: 'Nota para Comunicação' });
+    await usuario.click(within(comunicacao).getByRole('button', { name: '4' }));
+    expect(screen.getByText('Alterações ainda não salvas')).toBeInTheDocument();
+    const puts = () => fetch.mock.calls.filter(([, o]) => o.method === 'PUT').length;
+
+    await act(async () => vi.advanceTimersByTime(2900));
+    expect(puts()).toBe(0);
+    await act(async () => vi.advanceTimersByTime(200));
+    expect(puts()).toBe(1);
+
+    // Enquanto o salvamento está em andamento, a pessoa marca outra nota
+    const planilhas = screen.getByRole('radiogroup', { name: 'Nota para Planilhas' });
+    await usuario.click(within(planilhas).getByRole('button', { name: '2' }));
+    await act(async () => responderPut(resposta(200, {
+      ...avaliacao, itens: [{ ...avaliacao.itens[0], nota: 4 }, avaliacao.itens[1]],
+    })));
+
+    // A nota marcada durante o envio continua na tela e continua pendente de salvar
+    expect(within(planilhas).getByRole('button', { name: '2' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(comunicacao).getByRole('button', { name: '4' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Alterações ainda não salvas')).toBeInTheDocument();
+  });
+});
 
 describe('AvaliacaoForm', () => {
   it('seleciona a nota no controle segmentado e libera a conclusão só com todas as notas', async () => {

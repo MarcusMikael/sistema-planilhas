@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
@@ -7,6 +7,8 @@ import { Alerta, Badge, Cartao, Carregando, Pagina } from '../components/ui.jsx'
 import { ROTULOS, fmtData } from '../format.js';
 
 const NOTAS = [0, 1, 2, 3, 4, 5];
+const AUTOSALVAR_MS = 3000;
+const fmtHora = (d) => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 export default function AvaliacaoForm() {
   const { id } = useParams();
@@ -31,23 +33,57 @@ export default function AvaliacaoForm() {
   });
   useAvisoSaida(sujo);
 
-  if (av.carregando) return <Carregando />;
-  if (av.erro) return <Pagina titulo="Avaliação"><Alerta erro={av.erro} /></Pagina>;
-  const a = av.data;
-  const editavel = a.status === 'EM_ANDAMENTO' && a.cicloStatus === 'LIBERADO' && a.avaliadorId === usuario.colaboradorId;
-  const preenchidas = itens.filter((i) => i.nota !== null && i.nota !== undefined).length;
-
-  const alterar = (ccId, campo, valor) =>
-    setItens((xs) => xs.map((i) => (i.cicloCompetenciaId === ccId ? { ...i, [campo]: valor } : i)));
+  const a0 = av.data;
+  const editavel = Boolean(a0) && a0.status === 'EM_ANDAMENTO' && a0.cicloStatus === 'LIBERADO'
+    && a0.avaliadorId === usuario.colaboradorId;
 
   const corpo = () => ({
     notas: itens.map((i) => ({ cicloCompetenciaId: i.cicloCompetenciaId, nota: i.nota, comentario: i.comentario || null })),
   });
 
+  // Atualiza o que está salvo SEM refazer a cópia editável: o que a pessoa digitou durante a requisição
+  // continua na tela (e continua marcado como não salvo).
+  const aplicarSalvo = (novo) => {
+    setOrigem(novo);
+    av.setData(novo);
+  };
+
+  // ---------- Rascunho automático ----------
+  // Alguns segundos depois da última alteração, salva sozinho. Uma ação manual (salvar ou concluir)
+  // iniciada nesse meio-tempo tem prioridade: a resposta do salvamento automático é descartada.
+  const [auto, setAuto] = useState({ estado: 'ocioso', hora: null, erro: null });
+  const geracao = useRef(0);
+  useEffect(() => {
+    if (!editavel || !sujo || acao.enviando) return undefined;
+    const minhaGeracao = geracao.current;
+    const timer = setTimeout(async () => {
+      setAuto((s) => ({ ...s, estado: 'salvando', erro: null }));
+      try {
+        const novo = await api.put(`/avaliacoes/${id}/notas`, corpo());
+        if (geracao.current !== minhaGeracao) return;
+        aplicarSalvo(novo);
+        setAuto({ estado: 'salvo', hora: new Date(), erro: null });
+      } catch (e) {
+        setAuto({ estado: 'erro', hora: null, erro: e });
+      }
+    }, AUTOSALVAR_MS);
+    return () => clearTimeout(timer);
+  }, [itens, editavel, sujo, acao.enviando]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (av.carregando) return <Carregando />;
+  if (av.erro) return <Pagina titulo="Avaliação"><Alerta erro={av.erro} /></Pagina>;
+  const a = av.data;
+  const preenchidas = itens.filter((i) => i.nota !== null && i.nota !== undefined).length;
+
+  const alterar = (ccId, campo, valor) =>
+    setItens((xs) => xs.map((i) => (i.cicloCompetenciaId === ccId ? { ...i, [campo]: valor } : i)));
+
   async function salvar() {
+    geracao.current++;
     try {
-      av.setData(await acao.executar(() => api.put(`/avaliacoes/${id}/notas`, corpo())));
+      aplicarSalvo(await acao.executar(() => api.put(`/avaliacoes/${id}/notas`, corpo())));
       setMsg('Rascunho salvo.');
+      setAuto({ estado: 'ocioso', hora: null, erro: null });
     } catch {
       setMsg(null);
     }
@@ -55,6 +91,7 @@ export default function AvaliacaoForm() {
 
   async function concluir() {
     if (!window.confirm('Concluir a avaliação? Depois de concluída ela não poderá ser alterada.')) return;
+    geracao.current++;
     try {
       await acao.executar(() => api.put(`/avaliacoes/${id}/notas`, corpo()));
       av.setData(await acao.executar(() => api.post(`/avaliacoes/${id}/concluir`)));
@@ -120,6 +157,12 @@ export default function AvaliacaoForm() {
 
       {editavel && (
         <div className="form-acoes">
+          <span className="texto-2 pequeno status-auto" role="status" aria-live="polite">
+            {auto.estado === 'salvando' ? 'Salvando rascunho…'
+              : auto.estado === 'erro' ? `Não foi possível salvar automaticamente: ${auto.erro.message}`
+                : sujo ? 'Alterações ainda não salvas'
+                  : auto.estado === 'salvo' ? `Rascunho salvo automaticamente às ${fmtHora(auto.hora)}` : ''}
+          </span>
           <button onClick={salvar} disabled={acao.enviando}>Salvar rascunho</button>
           <button className="btn-primario" onClick={concluir} disabled={acao.enviando || preenchidas < itens.length}
             title={preenchidas < itens.length ? 'Preencha todas as notas para concluir' : ''}>Concluir avaliação</button>

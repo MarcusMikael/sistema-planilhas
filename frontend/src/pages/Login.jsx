@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../auth.jsx';
 import { Alerta, Campo } from '../components/ui.jsx';
+import { useTituloAba } from '../hooks.js';
 
 // Contas FICTÍCIAS da carga de demonstração (ver README). Só aparecem em modo de desenvolvimento.
 const CONTAS_DEMO = [
@@ -10,6 +11,7 @@ const CONTAS_DEMO = [
 ];
 
 export default function Login() {
+  useTituloAba('Entrar');
   const { entrar } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');

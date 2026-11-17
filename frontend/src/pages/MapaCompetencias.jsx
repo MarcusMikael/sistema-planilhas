@@ -2,12 +2,11 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../hooks.js';
 import { Alerta, Campo, Cartao, Carregando, Pagina, Seletor, Vazio } from '../components/ui.jsx';
+import { CelulaCalor, LegendaCalor } from '../components/graficos.jsx';
 import { ROTULOS, fmtNum } from '../format.js';
 
+/** Competência × colaborador como mapa de calor: quanto mais escuro o verde, maior a nota do gestor. */
 function Tabela({ titulo, linhas, colaboradores }) {
-  const medias = linhas.map((l) => l.mediaGestor).filter((m) => m != null);
-  const max = Math.max(...medias);
-  const min = Math.min(...medias);
   return (
     <Cartao titulo={titulo}>
       <div className="tabela-wrap">
@@ -15,18 +14,20 @@ function Tabela({ titulo, linhas, colaboradores }) {
           <thead>
             <tr>
               <th>Competência</th>
-              {colaboradores.map((c) => <th key={c.id} className="num">{c.nome.split(' ')[0]}</th>)}
+              {colaboradores.map((c) => <th key={c.id} className="num" title={c.nome}>{c.nome.split(' ')[0]}</th>)}
               <th className="num">Média gestor</th>
               <th className="num">Média autoavaliação</th>
             </tr>
           </thead>
           <tbody>
             {linhas.map((l) => (
-              <tr key={l.competenciaId}
-                className={medias.length > 1 && l.mediaGestor === max ? 'destaque-bom' : medias.length > 1 && l.mediaGestor === min ? 'destaque-atencao' : ''}>
+              <tr key={l.competenciaId}>
                 <td>{l.competencia}</td>
-                {l.notasGestor.map((n, i) => <td key={i} className="num">{n ?? '—'}</td>)}
-                <td className="num"><strong>{fmtNum(l.mediaGestor)}</strong></td>
+                {l.notasGestor.map((n, i) => (
+                  <CelulaCalor key={colaboradores[i].id} valor={n}
+                    titulo={`${colaboradores[i].nome} · ${l.competencia}: ${n ?? 'sem nota'}`} />
+                ))}
+                <CelulaCalor valor={l.mediaGestor} forte titulo={`Média do gestor em ${l.competencia}: ${fmtNum(l.mediaGestor)}`} />
                 <td className="num">{fmtNum(l.mediaAutoavaliacao)}</td>
               </tr>
             ))}
@@ -49,7 +50,7 @@ export default function MapaCompetencias() {
   const m = mapa.data;
   return (
     <Pagina titulo="Mapa de competências"
-      subtitulo="Competência × colaborador avaliado, com a média de cada competência. Verde: melhor resultado; amarelo: exige atenção.">
+      subtitulo="Notas do gestor por competência e colaborador. Quanto mais escuro o verde, maior a nota; células claras mostram as lacunas da equipe.">
       <div className="filtros">
         <Campo rotulo="Ciclo">
           <Seletor valor={cicloId} onChange={(v) => setParams({ ciclo: v })}
@@ -61,6 +62,7 @@ export default function MapaCompetencias() {
       {mapa.carregando && <Carregando />}
       {m && (m.colaboradores.length === 0 ? <Vazio>Nenhuma avaliação do gestor concluída neste ciclo.</Vazio> : (
         <>
+          <LegendaCalor />
           <Tabela titulo="Competências comportamentais" linhas={m.comportamentais} colaboradores={m.colaboradores} />
           <Tabela titulo="Competências técnicas" linhas={m.tecnicas} colaboradores={m.colaboradores} />
           <p className="texto-2 pequeno">Médias calculadas apenas com notas válidas de avaliações concluídas; notas ausentes não contam como zero.</p>

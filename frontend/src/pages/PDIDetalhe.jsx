@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { useAuth } from '../auth.jsx';
 import { useAcao, useApi } from '../hooks.js';
 import { Alerta, Badge, Campo, Cartao, Carregando, Modal, Pagina, Progresso, Seletor, Vazio } from '../components/ui.jsx';
 import { ROTULOS, fmtData } from '../format.js';
@@ -18,7 +17,6 @@ function Lista({ texto }) {
 
 export default function PDIDetalhe() {
   const { id } = useParams();
-  const { usuario, isRH } = useAuth();
   const pdi = useApi(`/pdis/${id}`);
   const ciclos = useApi('/ciclos');
   const [editPdi, setEditPdi] = useState(null);
@@ -30,8 +28,8 @@ export default function PDIDetalhe() {
   if (pdi.carregando) return <Carregando />;
   if (pdi.erro) return <Pagina titulo="PDI"><Alerta erro={pdi.erro} /></Pagina>;
   const p = pdi.data;
-  const ehDono = p.colaboradorId === usuario.colaboradorId;
-  const podeEditar = isRH || (p.gestorId != null && p.gestorId === usuario.colaboradorId && !ehDono);
+  // Permissões calculadas pelo backend (gestor atual do colaborador), para a tela não divergir das regras
+  const { podeEditar, podeAtualizarProgresso } = p;
   const ativo = p.status === 'ATIVO';
 
   async function exec(fn, fechar) {
@@ -113,7 +111,7 @@ export default function PDIDetalhe() {
                     <td><Badge status={a.status} grupo="statusAcao" /></td>
                     <td style={{ minWidth: 120 }}><Progresso valor={a.progresso} /></td>
                     <td className="acoes">
-                      {ativo && (ehDono || podeEditar) && (
+                      {podeAtualizarProgresso && (
                         <button className="btn-texto" onClick={() => { acao.setErro(null); setProgresso({ id: a.id, status: a.status, progresso: a.progresso, descricao: a.descricao }); }}>
                           Atualizar progresso
                         </button>
