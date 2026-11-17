@@ -1,15 +1,17 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from '../auth.jsx';
 import { mockFetch, resposta } from '../test/fetch.js';
 import Cabecalho from './Cabecalho.jsx';
 
+// Data local (mesma regra do componente), deslocada em dias
 const iso = (dias) => {
   const d = new Date();
   d.setDate(d.getDate() + dias);
-  return d.toISOString().slice(0, 10);
+  const p = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 
 const grupos = [
@@ -46,6 +48,18 @@ describe('Cabecalho', () => {
     expect(trilha).toHaveTextContent('Desempenho');
     expect(within(trilha).getByText('Matriz Nine Box')).toHaveAttribute('aria-current', 'page');
     expect(await screen.findByText('Ciclo 2026/1 · 45 dias')).toBeInTheDocument();
+  });
+
+  it('usa a data local: às 23h30 do último dia, o prazo ainda é "termina hoje"', async () => {
+    // 23h30 em Brasília = 02h30 do dia seguinte em UTC
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 17, 23, 30));
+    try {
+      montar('/', { ciclos: [{ id: 2, nome: 'Ciclo 2026/1', status: 'LIBERADO', dataInicio: '2026-11-01', dataFim: '2026-11-17' }] });
+      expect(await screen.findByText('Ciclo 2026/1 · termina hoje')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('em uma página de detalhe, a trilha leva de volta à lista', async () => {

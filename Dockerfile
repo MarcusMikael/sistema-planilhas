@@ -13,6 +13,10 @@ FROM eclipse-temurin:21-jre
 # Sem isto, esquecer a variável no Render subiria o perfil dev (H2, contas "sdpp123", segredo JWT conhecido).
 ENV SPRING_PROFILES_ACTIVE=prod
 
+# Datas no horário de Brasília. O Render roda em UTC (3 h à frente): sem isto, entre 21h e meia-noite o
+# "hoje" do sistema já seria o dia seguinte (prazos de ciclo e de clima, datas de conclusão, ações atrasadas).
+ENV TZ=America/Sao_Paulo
+
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
@@ -45,4 +49,5 @@ USER sdpp
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -XX:SharedArchiveFile=application/application.jsa -jar application/app.jar"]
+# O fuso também vai direto para a JVM (fora de JAVA_OPTS, para não se perder se a variável for trocada no Render)
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Duser.timezone=America/Sao_Paulo -XX:SharedArchiveFile=application/application.jsa -jar application/app.jar"]

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { useApi } from '../hooks.js';
-import { ROTULOS, fmtData } from '../format.js';
+import { ROTULOS, fmtData, hojeIso } from '../format.js';
 
 const ICONE = { strokeWidth: 1.5, 'aria-hidden': true };
 
@@ -55,7 +55,8 @@ function Trilha({ grupos }) {
 /** Ciclo liberado para avaliações e quantos dias faltam para o prazo. */
 function CicloAtual() {
   const ciclos = useApi('/ciclos');
-  const hoje = new Date().toISOString().slice(0, 10);
+  // Data local (toISOString seria UTC: depois das 21h em Brasília já daria o dia seguinte)
+  const hoje = hojeIso();
   const ciclo = (ciclos.data || []).find((c) => c.status === 'LIBERADO' && c.dataInicio <= hoje && c.dataFim >= hoje);
   if (!ciclo) return null;
   const dias = Math.round((new Date(`${ciclo.dataFim}T00:00:00`) - new Date(`${hoje}T00:00:00`)) / 86400000);
