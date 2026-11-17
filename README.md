@@ -515,6 +515,7 @@ trabalharam no projeto ficam em [EQUIPES.md](EQUIPES.md).
 | Rodolfo Dheymison Ferreira Silva |
 | João William Soares Teodomiro Setubal de Carvalho |
 | Enzo Morais Gonçalves |
+| Marcus Mikael Rodrigues Vieira |
 
 ---
 
