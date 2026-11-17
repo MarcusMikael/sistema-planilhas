@@ -487,10 +487,16 @@ Os pontos em aberto (PA) do DRS que ainda não tinham definição foram resolvid
 
 ## Equipe
 
-<!-- Preencher com os integrantes da equipe e o papel de cada um no projeto. -->
+<!-- Para completar: substitua "_a preencher_" pelo link do GitHub de cada integrante, no formato [@usuario](https://github.com/usuario). -->
 
-| Integrante | Papel no projeto |
+| Integrante | GitHub |
 |---|---|
-| _a preencher_ | _a preencher_ |
+| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) |
+| Marcos André dos Santos Soares | _a preencher_ |
+| Carlos Arthur Moraes Gonçalves | _a preencher_ |
+| João Pedro Lima Barbosa | _a preencher_ |
+| Rodofo Dheymison Ferreira Silva | _a preencher_ |
+| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ |
+| Enzo Morais Gonçalves | _a preencher_ |
 
 Orientação: professor Aluysio Fonseca · Disciplina Gestão de Pessoas · Engenharia de Software – UNIFSA, 2026.
