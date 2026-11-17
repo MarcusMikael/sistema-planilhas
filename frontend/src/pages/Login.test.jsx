@@ -50,4 +50,17 @@ describe('Login', () => {
     render(<AuthProvider><Tela /></AuthProvider>);
     expect(await screen.findByText('Logado como Carlos Lima')).toBeInTheDocument();
   });
+
+  it('entra com um clique como um personagem da demonstração', async () => {
+    const fetch = mockFetch({
+      'GET /auth/me': resposta(401, {}),
+      'POST /auth/login': resposta(200, { token: 'x', usuario: { nome: 'Maria Oliveira', perfil: 'COLABORADOR' } }),
+    });
+    render(<AuthProvider><Tela /></AuthProvider>);
+    await userEvent.click(await screen.findByRole('button', { name: 'Entrar como Maria (Destaque)' }));
+
+    expect(await screen.findByText('Logado como Maria Oliveira')).toBeInTheDocument();
+    const [, opcoes] = fetch.mock.calls.find(([url]) => url.endsWith('/auth/login'));
+    expect(JSON.parse(opcoes.body)).toEqual({ email: 'maria@sdpp.local', senha: 'sdpp123' });
+  });
 });

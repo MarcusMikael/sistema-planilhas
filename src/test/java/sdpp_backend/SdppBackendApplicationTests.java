@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +38,9 @@ import sdpp_backend.security.CookieSessao;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SdppBackendApplicationTests {
+
+    private static final String CICLO_ATUAL = DataInitializer.nomeCicloAtual(LocalDate.now());
+    private static final String CICLO_ANTERIOR = DataInitializer.nomeCicloAnterior(LocalDate.now());
 
     @Autowired
     private MockMvc mvc;
@@ -131,7 +135,7 @@ class SdppBackendApplicationTests {
     @DisplayName("Sessão do navegador em cookie HttpOnly, com proteção contra CSRF e logout")
     void sessaoPorCookie() throws Exception {
         var login = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"joana@sdpp.local\",\"senha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
+                        .content("{\"email\":\"joao@sdpp.local\",\"senha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
         String setCookie = login.getHeader("Set-Cookie");
@@ -140,7 +144,7 @@ class SdppBackendApplicationTests {
         var cookie = new jakarta.servlet.http.Cookie(CookieSessao.NOME, login.getCookie(CookieSessao.NOME).getValue());
 
         mvc.perform(get("/api/auth/me").cookie(cookie))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.email").value("joana@sdpp.local"));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.email").value("joao@sdpp.local"));
         String senhaErrada = "{\"senhaAtual\":\"errada\",\"novaSenha\":\"qualquer-1\"}";
         // Pelo cookie, alterar dados sem o cabeçalho anti-CSRF não autentica
         mvc.perform(post("/api/auth/senha").cookie(cookie).contentType(MediaType.APPLICATION_JSON).content(senhaErrada))
@@ -196,16 +200,16 @@ class SdppBackendApplicationTests {
     @DisplayName("CA-RF-SEG-02: colaborador A não acessa dados de B; gestor só vê a própria equipe")
     void permissoesPorPessoaEEquipe() throws Exception {
         Long pedro = idColaborador("Pedro Santos");
-        Long marina = idColaborador("Marina Oliveira");
-        mvc.perform(como("marina@sdpp.local", get("/api/colaboradores/" + pedro))).andExpect(status().isForbidden());
-        mvc.perform(como("marina@sdpp.local", get("/api/pdis?colaboradorId=" + idColaborador("Joana D'Ávila"))))
+        Long maria = idColaborador("Maria Oliveira");
+        mvc.perform(como("maria@sdpp.local", get("/api/colaboradores/" + pedro))).andExpect(status().isForbidden());
+        mvc.perform(como("maria@sdpp.local", get("/api/pdis?colaboradorId=" + idColaborador("João Pereira"))))
                 .andExpect(status().isForbidden());
-        mvc.perform(como("gestora.comercial@sdpp.local", get("/api/colaboradores/" + marina)))
+        mvc.perform(como("gestora.comercial@sdpp.local", get("/api/colaboradores/" + maria)))
                 .andExpect(status().isForbidden());
-        mvc.perform(como("gestor@sdpp.local", get("/api/colaboradores/" + marina))).andExpect(status().isOk());
-        mvc.perform(como("marina@sdpp.local", get("/api/colaboradores")))
+        mvc.perform(como("gestor@sdpp.local", get("/api/colaboradores/" + maria))).andExpect(status().isOk());
+        mvc.perform(como("maria@sdpp.local", get("/api/colaboradores")))
                 .andExpect(jsonPath("$.length()").value(1));
-        mvc.perform(como("marina@sdpp.local", get("/api/usuarios"))).andExpect(status().isForbidden());
+        mvc.perform(como("maria@sdpp.local", get("/api/usuarios"))).andExpect(status().isForbidden());
     }
 
     // ---------- COL ----------
@@ -277,33 +281,33 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("CA-RF-AVA-01/03 e CA-RN-02: nota 6 é rejeitada; não conclui com nota ausente")
     void autoavaliacao() throws Exception {
-        Long ciclo = idCiclo("Ciclo 2026/1");
-        Long lucas = idColaborador("Lucas Rocha");
-        String av = json("lucas@sdpp.local", post("/api/avaliacoes")
-                .content("{\"cicloId\":" + ciclo + ",\"colaboradorId\":" + lucas + ",\"tipo\":\"AUTOAVALIACAO\"}"));
+        Long ciclo = idCiclo(CICLO_ATUAL);
+        Long joao = idColaborador("João Pereira");
+        String av = json("joao@sdpp.local", post("/api/avaliacoes")
+                .content("{\"cicloId\":" + ciclo + ",\"colaboradorId\":" + joao + ",\"tipo\":\"AUTOAVALIACAO\"}"));
         Integer id = JsonPath.read(av, "$.id");
         List<Integer> ccs = JsonPath.read(av, "$.itens[*].cicloCompetenciaId");
         org.assertj.core.api.Assertions.assertThat(ccs).hasSize(10);
 
-        mvc.perform(como("lucas@sdpp.local", put("/api/avaliacoes/" + id + "/notas")
+        mvc.perform(como("joao@sdpp.local", put("/api/avaliacoes/" + id + "/notas")
                         .content("{\"notas\":[{\"cicloCompetenciaId\":" + ccs.get(0) + ",\"nota\":6}]}")))
                 .andExpect(status().isBadRequest());
 
         String noveNotas = ccs.subList(0, 9).stream().map(cc -> "{\"cicloCompetenciaId\":" + cc + ",\"nota\":4}")
                 .collect(Collectors.joining(","));
-        json("lucas@sdpp.local", put("/api/avaliacoes/" + id + "/notas").content("{\"notas\":[" + noveNotas + "]}"));
-        mvc.perform(como("lucas@sdpp.local", post("/api/avaliacoes/" + id + "/concluir")))
+        json("joao@sdpp.local", put("/api/avaliacoes/" + id + "/notas").content("{\"notas\":[" + noveNotas + "]}"));
+        mvc.perform(como("joao@sdpp.local", post("/api/avaliacoes/" + id + "/concluir")))
                 .andExpect(status().isUnprocessableContent());
 
-        json("lucas@sdpp.local", put("/api/avaliacoes/" + id + "/notas")
+        json("joao@sdpp.local", put("/api/avaliacoes/" + id + "/notas")
                 .content("{\"notas\":[{\"cicloCompetenciaId\":" + ccs.get(9) + ",\"nota\":0}]}"));
-        mvc.perform(como("lucas@sdpp.local", post("/api/avaliacoes/" + id + "/concluir")))
+        mvc.perform(como("joao@sdpp.local", post("/api/avaliacoes/" + id + "/concluir")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONCLUIDA"))
                 .andExpect(jsonPath("$.dataAvaliacao").exists());
 
         // A autoavaliação de outra pessoa não pode ser aberta
-        mvc.perform(como("lucas@sdpp.local", post("/api/avaliacoes").content("{\"cicloId\":" + ciclo
+        mvc.perform(como("joao@sdpp.local", post("/api/avaliacoes").content("{\"cicloId\":" + ciclo
                         + ",\"colaboradorId\":" + idColaborador("Pedro Santos") + ",\"tipo\":\"AUTOAVALIACAO\"}")))
                 .andExpect(status().isForbidden());
     }
@@ -311,7 +315,7 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("CA-RF-AVA-02: gestor avalia a sua equipe, de forma independente; não avalia outra equipe")
     void avaliacaoDoGestor() throws Exception {
-        Long ciclo = idCiclo("Ciclo 2026/1");
+        Long ciclo = idCiclo(CICLO_ATUAL);
         Long beatriz = idColaborador("Beatriz Alves");
         String corpo = "{\"cicloId\":" + ciclo + ",\"colaboradorId\":" + beatriz + ",\"tipo\":\"GESTOR\"}";
         mvc.perform(como("gestor@sdpp.local", post("/api/avaliacoes").content(corpo)))
@@ -328,21 +332,21 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("CA-RF-AVA-05: resultados não liberados não ficam disponíveis ao colaborador")
     void liberacaoDeResultados() throws Exception {
-        Long atual = idCiclo("Ciclo 2026/1");
-        Long marina = idColaborador("Marina Oliveira");
-        mvc.perform(como("marina@sdpp.local", get("/api/ciclos/" + atual + "/resultados/" + marina)))
+        Long atual = idCiclo(CICLO_ATUAL);
+        Long maria = idColaborador("Maria Oliveira");
+        mvc.perform(como("maria@sdpp.local", get("/api/ciclos/" + atual + "/resultados/" + maria)))
                 .andExpect(status().isForbidden());
-        mvc.perform(como("rh@sdpp.local", get("/api/ciclos/" + atual + "/resultados/" + marina)))
+        mvc.perform(como("rh@sdpp.local", get("/api/ciclos/" + atual + "/resultados/" + maria)))
                 .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("CA-RF-AVA-06/08a/08b: comparação gestor 4,1 × autoavaliação 3,9")
     void comparacaoDeResultados() throws Exception {
-        Long anterior = idCiclo("Ciclo 2025/2");
-        Long marina = idColaborador("Marina Oliveira");
-        for (String quem : List.of("marina@sdpp.local", "gestor@sdpp.local")) {
-            mvc.perform(como(quem, get("/api/ciclos/" + anterior + "/resultados/" + marina)))
+        Long anterior = idCiclo(CICLO_ANTERIOR);
+        Long pedro = idColaborador("Pedro Santos");
+        for (String quem : List.of("pedro@sdpp.local", "gestor@sdpp.local")) {
+            mvc.perform(como(quem, get("/api/ciclos/" + anterior + "/resultados/" + pedro)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.gestor.comportamental").value(4.0))
                     .andExpect(jsonPath("$.gestor.tecnica").value(4.2))
@@ -350,7 +354,7 @@ class SdppBackendApplicationTests {
                     .andExpect(jsonPath("$.autoavaliacao.tecnica").value(3.8))
                     .andExpect(jsonPath("$.autoavaliacao.geral").value(3.9));
         }
-        mvc.perform(como("pedro@sdpp.local", get("/api/ciclos/" + anterior + "/resultados/" + marina)))
+        mvc.perform(como("maria@sdpp.local", get("/api/ciclos/" + anterior + "/resultados/" + pedro)))
                 .andExpect(status().isForbidden());
         mvc.perform(como("rh@sdpp.local", get("/api/ciclos/" + anterior + "/mapa-competencias")))
                 .andExpect(status().isOk())
@@ -363,37 +367,37 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("CA-RF-NBX-02a/02c/03: exemplos de [P2] nos quadrantes; sem dados fica pendente")
     void nineBox() throws Exception {
-        Long anterior = idCiclo("Ciclo 2025/2");
+        Long anterior = idCiclo(CICLO_ANTERIOR);
         String matriz = json("gestor@sdpp.local", get("/api/nine-box?cicloId=" + anterior));
         org.assertj.core.api.Assertions.assertThat(
-                JsonPath.<List<String>>read(matriz, "$.itens[?(@.colaboradorNome == 'Marina Oliveira')].quadrante.rotulo"))
-                .containsExactly("Mantenedor");
+                JsonPath.<List<String>>read(matriz, "$.itens[?(@.colaboradorNome == 'Maria Oliveira')].quadrante.rotulo"))
+                .containsExactly("Alto potencial");
         org.assertj.core.api.Assertions.assertThat(
                 JsonPath.<List<String>>read(matriz, "$.itens[?(@.colaboradorNome == 'Pedro Santos')].quadrante.rotulo"))
                 .containsExactly("Forte desempenho");
         org.assertj.core.api.Assertions.assertThat(
-                JsonPath.<List<String>>read(matriz, "$.itens[?(@.colaboradorNome == \"Joana D'Ávila\")].quadrante.rotulo"))
+                JsonPath.<List<String>>read(matriz, "$.itens[?(@.colaboradorNome == \"João Pereira\")].quadrante.rotulo"))
                 .containsExactly("Enigma");
         org.assertj.core.api.Assertions.assertThat(
                 JsonPath.<List<Boolean>>read(matriz, "$.itens[?(@.colaboradorNome == 'Beatriz Alves')].pendente"))
                 .containsExactly(true);
-        mvc.perform(como("marina@sdpp.local", get("/api/nine-box?cicloId=" + anterior)))
+        mvc.perform(como("maria@sdpp.local", get("/api/nine-box?cicloId=" + anterior)))
                 .andExpect(status().isForbidden());
 
         // Só potencial informado → continua pendente; Alto × Alto → Alto potencial
-        Long lucas = idColaborador("Lucas Rocha");
+        Long beatriz = idColaborador("Beatriz Alves");
         mvc.perform(como("gestor@sdpp.local", put("/api/nine-box").content(
-                        "{\"cicloId\":" + anterior + ",\"colaboradorId\":" + lucas + ",\"potencial\":\"ALTO\"}")))
+                        "{\"cicloId\":" + anterior + ",\"colaboradorId\":" + beatriz + ",\"potencial\":\"ALTO\"}")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pendente").value(true));
         mvc.perform(como("gestor@sdpp.local", put("/api/nine-box").content("{\"cicloId\":" + anterior
-                        + ",\"colaboradorId\":" + lucas + ",\"desempenho\":\"ALTO\",\"potencial\":\"ALTO\"}")))
+                        + ",\"colaboradorId\":" + beatriz + ",\"desempenho\":\"ALTO\",\"potencial\":\"ALTO\"}")))
                 .andExpect(jsonPath("$.quadrante.rotulo").value("Alto potencial"));
         mvc.perform(como("gestor@sdpp.local", put("/api/nine-box").content("{\"cicloId\":" + anterior
-                        + ",\"colaboradorId\":" + lucas + ",\"desempenho\":\"MEDIO\",\"potencial\":\"ALTO\"}")))
+                        + ",\"colaboradorId\":" + beatriz + ",\"desempenho\":\"MEDIO\",\"potencial\":\"ALTO\"}")))
                 .andExpect(jsonPath("$.quadrante.rotulo").value("Em crescimento"));
         mvc.perform(como("gestor@sdpp.local", put("/api/nine-box").content("{\"cicloId\":" + anterior
-                        + ",\"colaboradorId\":" + lucas + ",\"desempenho\":\"OTIMO\"}")))
+                        + ",\"colaboradorId\":" + beatriz + ",\"desempenho\":\"OTIMO\"}")))
                 .andExpect(status().isBadRequest());
     }
 
@@ -416,7 +420,7 @@ class SdppBackendApplicationTests {
         Integer acaoId = JsonPath.read(acao, "$.id");
 
         String progresso = "{\"status\":\"EM_ANDAMENTO\",\"progresso\":50}";
-        mvc.perform(como("marina@sdpp.local", patch("/api/acoes-pdi/" + acaoId + "/progresso").content(progresso)))
+        mvc.perform(como("maria@sdpp.local", patch("/api/acoes-pdi/" + acaoId + "/progresso").content(progresso)))
                 .andExpect(status().isForbidden());
         mvc.perform(como("pedro@sdpp.local", patch("/api/acoes-pdi/" + acaoId + "/progresso").content(progresso)))
                 .andExpect(status().isOk())
@@ -461,17 +465,17 @@ class SdppBackendApplicationTests {
     @DisplayName("RN-06: setor pequeno não pode ser deduzido por subtração do total")
     void climaSemDeducaoPorSubtracao() throws Exception {
         String lista = json("rh@sdpp.local", get("/api/pesquisas-clima"));
-        Integer id = JsonPath.<List<Integer>>read(lista, "$[?(@.titulo == 'Pesquisa de Clima 2025')].id").get(0);
+        Integer id = JsonPath.<List<Integer>>read(lista, "$[?(@.titulo == '" + DataInitializer.nomePesquisaEncerrada(LocalDate.now()) + "')].id").get(0);
         String resultados = json("rh@sdpp.local", get("/api/pesquisas-clima/" + id + "/resultados"));
         org.assertj.core.api.Assertions.assertThat(resultados)
                 .doesNotContain("colaborador").doesNotContain("@sdpp.local");
-        // Tecnologia (5) e Comercial (1): exibir Tecnologia permitiria calcular a resposta do Comercial
-        // (6 × média geral − 5 × média de Tecnologia); os dois são reunidos em um grupo de 6.
+        // Tecnologia (4) e Comercial (1) ficam abaixo do mínimo de 5 respostas: os dois são reunidos em um grupo
+        // de 5, e nenhum setor aparece sozinho. (O caso da dedução por subtração, 5 + 1, está no teste ponta a ponta.)
         mvc.perform(como("rh@sdpp.local", get("/api/pesquisas-clima/" + id + "/resultados")))
-                .andExpect(jsonPath("$.totalParticipacoes").value(6))
+                .andExpect(jsonPath("$.totalParticipacoes").value(5))
                 .andExpect(jsonPath("$.perguntas[1].exibido").value(true))
                 .andExpect(jsonPath("$.perguntas[1].porSetor.length()").value(1))
-                .andExpect(jsonPath("$.perguntas[1].porSetor[0].totalRespostas").value(6))
+                .andExpect(jsonPath("$.perguntas[1].porSetor[0].totalRespostas").value(5))
                 .andExpect(jsonPath("$.perguntas[1].porSetor[*].setor", not(hasItem("Tecnologia"))))
                 .andExpect(jsonPath("$.perguntas[1].porSetor[*].setor", not(hasItem("Comercial"))));
     }
@@ -485,17 +489,17 @@ class SdppBackendApplicationTests {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.escopo").value("ORGANIZACAO"));
         mvc.perform(como("gestor@sdpp.local", get("/api/indicadores")))
                 .andExpect(jsonPath("$.escopo").value("EQUIPE"))
-                .andExpect(jsonPath("$.totalColaboradores").value(5));
-        Long joana = idColaborador("Joana D'Ávila");
-        mvc.perform(como("joana@sdpp.local", get("/api/colaboradores/" + joana + "/historico")))
+                .andExpect(jsonPath("$.totalColaboradores").value(4));
+        Long joao = idColaborador("João Pereira");
+        mvc.perform(como("joao@sdpp.local", get("/api/colaboradores/" + joao + "/historico")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pdis.length()").value(1))
-                .andExpect(jsonPath("$.ciclos[1].cicloNome").value("Ciclo 2025/2"))
+                .andExpect(jsonPath("$.ciclos[1].cicloNome").value(CICLO_ANTERIOR))
                 .andExpect(jsonPath("$.ciclos[1].gestor.geral").exists())
                 .andExpect(jsonPath("$.ciclos[1].quadrante").doesNotExist());
-        mvc.perform(como("gestor@sdpp.local", get("/api/colaboradores/" + joana + "/historico")))
+        mvc.perform(como("gestor@sdpp.local", get("/api/colaboradores/" + joao + "/historico")))
                 .andExpect(jsonPath("$.ciclos[1].quadrante").value("Enigma"));
-        mvc.perform(como("marina@sdpp.local", get("/api/colaboradores/" + joana + "/historico")))
+        mvc.perform(como("maria@sdpp.local", get("/api/colaboradores/" + joao + "/historico")))
                 .andExpect(status().isForbidden());
     }
 
@@ -511,7 +515,7 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("Gestor com perfil RH avalia a equipe direta (gestores que respondem ao RH)")
     void rhAvaliaSuaEquipe() throws Exception {
-        Long ciclo = idCiclo("Ciclo 2026/1");
+        Long ciclo = idCiclo(CICLO_ATUAL);
         Long carlos = idColaborador("Carlos Lima");
         String pend = json("rh@sdpp.local", get("/api/avaliacoes/pendentes"));
         org.assertj.core.api.Assertions.assertThat(
@@ -587,7 +591,7 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("Trocar o gestor durante o ciclo descarta o rascunho do gestor anterior; o novo avalia do zero")
     void trocaDeGestorDuranteOCiclo() throws Exception {
-        Long ciclo = idCiclo("Ciclo 2026/1");
+        Long ciclo = idCiclo(CICLO_ATUAL);
         Long beatriz = idColaborador("Beatriz Alves");
         Long carlos = idColaborador("Carlos Lima");
         Long ana = idColaborador("Ana Souza");
@@ -624,11 +628,11 @@ class SdppBackendApplicationTests {
         json("rh@sdpp.local", put("/api/ciclos/" + id + "/competencias").content(ids(sel)));
         json("rh@sdpp.local", post("/api/ciclos/" + id + "/liberar"));
 
-        mvc.perform(como("marina@sdpp.local", post("/api/avaliacoes").content("{\"cicloId\":" + id
-                        + ",\"colaboradorId\":" + idColaborador("Marina Oliveira") + ",\"tipo\":\"AUTOAVALIACAO\"}")))
+        mvc.perform(como("maria@sdpp.local", post("/api/avaliacoes").content("{\"cicloId\":" + id
+                        + ",\"colaboradorId\":" + idColaborador("Maria Oliveira") + ",\"tipo\":\"AUTOAVALIACAO\"}")))
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.mensagem").value(org.hamcrest.Matchers.containsString("prazo")));
-        String pend = json("marina@sdpp.local", get("/api/avaliacoes/pendentes"));
+        String pend = json("maria@sdpp.local", get("/api/avaliacoes/pendentes"));
         org.assertj.core.api.Assertions.assertThat(JsonPath.<List<String>>read(pend, "$[*].cicloNome"))
                 .doesNotContain("Ciclo Vencido");
     }
@@ -659,15 +663,15 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("PDI informa as permissões do usuário atual, seguindo o gestor atual do colaborador")
     void permissoesDoPdi() throws Exception {
-        String lista = json("joana@sdpp.local", get("/api/pdis"));
+        String lista = json("joao@sdpp.local", get("/api/pdis"));
         Integer pdi = JsonPath.read(lista, "$[0].id");
-        mvc.perform(como("joana@sdpp.local", get("/api/pdis/" + pdi)))
+        mvc.perform(como("joao@sdpp.local", get("/api/pdis/" + pdi)))
                 .andExpect(jsonPath("$.podeEditar").value(false))
                 .andExpect(jsonPath("$.podeAtualizarProgresso").value(true))
                 .andExpect(jsonPath("$.gestorNome").value("Carlos Lima"));
         mvc.perform(como("gestor@sdpp.local", get("/api/pdis/" + pdi)))
                 .andExpect(jsonPath("$.podeEditar").value(true));
-        mvc.perform(como("marina@sdpp.local", get("/api/pdis/" + pdi))).andExpect(status().isForbidden());
+        mvc.perform(como("maria@sdpp.local", get("/api/pdis/" + pdi))).andExpect(status().isForbidden());
     }
 
     @Test
@@ -712,7 +716,7 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("Token adulterado é rejeitado")
     void tokenAdulterado() throws Exception {
-        String t = token("marina@sdpp.local");
+        String t = token("maria@sdpp.local");
         String adulterado = t.substring(0, t.length() - 2) + (t.endsWith("A") ? "BB" : "AA");
         mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + adulterado))
                 .andExpect(status().isUnauthorized());
@@ -721,12 +725,12 @@ class SdppBackendApplicationTests {
     @Test
     @DisplayName("CA-RF-CIC-04: catálogo inicial 10 + 10 e descrição editável pelo RH")
     void catalogoDeCompetencias() throws Exception {
-        String catalogo = json("marina@sdpp.local", get("/api/competencias"));
+        String catalogo = json("maria@sdpp.local", get("/api/competencias"));
         org.assertj.core.api.Assertions.assertThat(JsonPath.<List<?>>read(catalogo, "$[?(@.tipo == 'COMPORTAMENTAL')]")).hasSize(10);
         org.assertj.core.api.Assertions.assertThat(JsonPath.<List<?>>read(catalogo, "$[?(@.tipo == 'TECNICA')]")).hasSize(10);
         Integer id = JsonPath.<List<Integer>>read(catalogo, "$[?(@.nome == 'Organização')].id").get(0);
         String corpo = "{\"nome\":\"Organização\",\"descricao\":\"Nova descrição\",\"tipo\":\"COMPORTAMENTAL\"}";
-        mvc.perform(como("marina@sdpp.local", put("/api/competencias/" + id).content(corpo)))
+        mvc.perform(como("maria@sdpp.local", put("/api/competencias/" + id).content(corpo)))
                 .andExpect(status().isForbidden());
         mvc.perform(como("rh@sdpp.local", put("/api/competencias/" + id).content(corpo)))
                 .andExpect(status().isOk())
