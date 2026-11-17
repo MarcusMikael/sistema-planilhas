@@ -182,12 +182,11 @@ cd frontend && npm run build                 # gera frontend/dist (arquivos est�
 
 Criadas automaticamente quando o banco está vazio (perfil `dev`, ou `SDPP_SEED_DEMO=true` em produção). Todos
 os dados são **fictícios** (restrição RES-02 do DRS). **Senha de todas as contas: `sdpp123`.** Na tela de login,
-os botões dos personagens entram com um clique.
+os botões das contas de demonstração entram com um clique.
 
-Os dados contam uma pequena história, a da equipe de Tecnologia de uma empresa fictícia, para que qualquer pessoa
-consiga apresentar o sistema:
+Os dados simulam a equipe de Tecnologia de uma empresa fictícia, com uma situação diferente para cada pessoa:
 
-| Personagem | E-mail | Papel na história |
+| Pessoa | E-mail | Situação nos dados |
 |---|---|---|
 | **Ana Souza** (RH) | `rh@sdpp.local` | Conduz os ciclos de avaliação e a pesquisa de clima e acompanha os indicadores da empresa |
 | **Carlos Lima** (Gestor) | `gestor@sdpp.local` | Gerencia a equipe de Tecnologia: avalia, posiciona na Nine Box e acompanha os PDIs |
@@ -217,7 +216,7 @@ Situação montada (os nomes de ciclos e pesquisas seguem o semestre em que o ba
 - **pesquisa de clima do semestre passado**, encerrada, com resultados agregados (Tecnologia e Comercial, abaixo
   do mínimo de 5 respostas cada, aparecem reunidos em um só grupo).
 
-**Sugestão de roteiro para conhecer o sistema:**
+**Como explorar o sistema:**
 
 1. Entre como **Beatriz** e faça a autoavaliação em *Minha autoavaliação*.
 2. Entre como **Carlos**, avalie a equipe em *Avaliações* e veja a *Matriz Nine Box* e o PDI do João.
@@ -332,7 +331,7 @@ frontend envia sempre e um site de terceiros não consegue enviar.
   qualquer conta) bloqueiam novos navegadores, contra quem testa uma senha comum em muitas contas;
 - o navegador onde a pessoa já entrou recebe um cookie de dispositivo assinado (`sdpp_dispositivo`, 180 dias)
   e tem contador próprio: alguém errando a senha de propósito em outro lugar não bloqueia o dono da conta.
-  **Dica para apresentações:** entre uma vez com cada conta no computador que será usado, antes de começar.
+  **Dica para demonstrações:** entre uma vez com cada conta no computador que será usado, antes de começar.
 
 **Senhas.** BCrypt; senhas novas precisam de ao menos 8 caracteres, com letras e números (as contas de
 demonstração mantêm `sdpp123`, pois são criadas direto no banco).
@@ -393,14 +392,14 @@ No plano gratuito, o Render desliga o backend depois de cerca de 15 minutos sem 
   durante o build, além de ajustar a JVM para pouca CPU. Em medição local, o tempo até o contexto do Spring
   ficar pronto caiu de cerca de 9,3 s para 4,9 s.
 
-Para eliminar a espera: use uma instância paga ou, perto de apresentações, um serviço de ping gratuito (por
+Para eliminar a espera: use uma instância paga ou, perto de demonstrações, um serviço de ping gratuito (por
 exemplo, UptimeRobot) chamando `https://<seu-backend>.onrender.com/api/saude` a cada 10 minutos (na versão da
 equipe fundadora, `https://sistema-planilhas-najb.onrender.com/api/saude`).
 
 ### Banco de dados em produção
 
 - **Backup:** o PostgreSQL gratuito do Render não tem backup automático e tem prazo de validade (confira a data
-  no painel do Render). Antes de apresentações e de mudanças grandes, gere uma cópia com a *External Database
+  no painel do Render). Antes de demonstrações e de mudanças grandes, gere uma cópia com a *External Database
   URL* do painel:
 
   ```bash

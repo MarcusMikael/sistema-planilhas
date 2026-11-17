@@ -209,7 +209,7 @@ public class DataInitializer implements ApplicationRunner {
 
     // ---------- Dados fictícios de demonstração ----------
     //
-    // Uma pequena história, pensada para a apresentação (roteiro completo fora do repositório):
+    // Os dados simulam a equipe de Tecnologia de uma empresa fictícia, com uma situação para cada pessoa:
     // - Ana (RH) conduz os ciclos e a pesquisa de clima e acompanha os indicadores da empresa.
     // - Carlos gerencia a equipe de Tecnologia: avalia, posiciona na Nine Box e acompanha os PDIs.
     // - Maria é o destaque da equipe (Alto potencial) e se prepara para a liderança técnica.
