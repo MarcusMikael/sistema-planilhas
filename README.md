@@ -313,7 +313,7 @@ Frontend na **Vercel**:
 
 O `vercel.json` faz duas coisas:
 
-1. **Repassa `/api` ao backend (proxy).** Troque `SEU-BACKEND.onrender.com` pela URL real do serviço no Render
+1. **Repassa `/api` ao backend (proxy).** O destino é o backend no Render (`sistema-planilhas-najb.onrender.com`); se o serviço mudar de endereço, atualize-o aqui
    antes do deploy. Assim frontend e API ficam no mesmo domínio e o cookie de sessão funciona em todos os
    navegadores, inclusive Safari e iPhone (que bloqueiam cookies entre domínios diferentes).
 2. Redireciona as demais rotas da aplicação para o `index.html`.
@@ -341,7 +341,7 @@ religar o contêiner e iniciar o Spring Boot, o que pode levar de 30 segundos a 
 
 Para eliminar a espera de vez: use uma instância paga do Render (não desliga) ou, perto de apresentações,
 configure um serviço de ping gratuito (por exemplo, UptimeRobot) para chamar
-`https://SEU-BACKEND.onrender.com/api/saude` a cada 10 minutos. Um único serviço ligado o mês inteiro cabe
+`https://sistema-planilhas-najb.onrender.com/api/saude` a cada 10 minutos. Um único serviço ligado o mês inteiro cabe
 nas horas gratuitas do Render, mas é um contorno que o próprio Render não recomenda.
 
 > **Risco R-01 (Arquitetura 7.2):** a Vercel não executa Java. A proposta é publicar o frontend na Vercel e o
