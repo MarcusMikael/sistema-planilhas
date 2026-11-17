@@ -232,7 +232,7 @@ Requer o backend no ar com o banco de demonstração recém-criado (apague `data
 node scripts/e2e-api.mjs
 ```
 
-**Testes e lint do frontend.** Vitest + Testing Library (46 testes: gráficos, foco nos modais, rascunho automático, política de senha, login por cookie, aviso de servidor lento, controle de notas,
+**Testes e lint do frontend.** Vitest + Testing Library (52 testes: cabeçalho, gráficos, foco nos modais, rascunho automático, política de senha, login por cookie, aviso de servidor lento, controle de notas,
 modal com alterações não salvas, aviso ao sair da página, Error Boundary e corrida de requisições no `useApi`)
 e ESLint com as regras de hooks do React.
 
@@ -243,6 +243,12 @@ npm run lint
 ```
 
 ---
+
+**Integração contínua.** O GitHub Actions (`.github/workflows/ci.yml`) roda os três conjuntos acima em todo
+pull request e em cada push na `main`: testes do backend, lint, testes e build do frontend, e o roteiro ponta a
+ponta contra o backend real com os dados de demonstração. Para impedir o merge quando algo falha, o dono do
+repositório ativa em *Settings → Branches* uma regra para a `main` exigindo os checks *Backend*, *Frontend* e
+*Ponta a ponta*.
 
 ## Estrutura do repositório
 
@@ -340,6 +346,12 @@ JavaScript da página não tem acesso a ele, então um eventual XSS não consegu
 alteram dados com autenticação por cookie exigem o cabeçalho `X-SDPP-CSRF` (proteção contra CSRF), que o
 frontend envia sempre. Clientes de API (testes, `scripts/e2e-api.mjs`) continuam usando
 `Authorization: Bearer <token>` com o token devolvido no corpo do login.
+
+### Fuso horário
+
+O `Dockerfile` fixa o fuso `America/Sao_Paulo` (variável `TZ` e `-Duser.timezone`). O Render roda em UTC, 3 horas
+à frente: sem isso, entre 21h e meia-noite o sistema já consideraria o dia seguinte (prazos de ciclo e de
+clima, datas de conclusão, ações atrasadas).
 
 ### Primeiro acesso lento (Render gratuito)
 
