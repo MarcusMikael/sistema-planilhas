@@ -3,8 +3,8 @@ import { useAuth } from '../auth.jsx';
 import { Alerta, Campo } from '../components/ui.jsx';
 import { useTituloAba } from '../hooks.js';
 
-// Personagens FICTÍCIOS da carga de demonstração (ver README), com a senha pública das contas de demonstração.
-// Entram com um clique, para facilitar a apresentação. Quem publicar uma versão para uso real deve desativar
+// Contas FICTÍCIAS da carga de demonstração (ver README), com a senha pública das contas de demonstração.
+// Entram com um clique, para facilitar demonstrações. Quem publicar uma versão para uso real deve desativar
 // essas contas no servidor e definir VITE_OCULTAR_CONTAS_DEMO=true para esconder os atalhos.
 const SENHA_DEMO = 'sdpp123';
 const CONTAS_DEMO = [
@@ -72,7 +72,7 @@ export default function Login() {
             </button>
             {MOSTRAR_CONTAS_DEMO && (
               <div className="contas-demo">
-                <p>Demonstração: entre como um dos personagens (dados fictícios)</p>
+                <p>Demonstração: entre com uma das contas (dados fictícios)</p>
                 <div className="contas-demo-grade">
                   {CONTAS_DEMO.map((c) => (
                     <button type="button" key={c.email} disabled={enviando}
