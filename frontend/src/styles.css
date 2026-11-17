@@ -35,10 +35,6 @@
   --info-texto: #3730a3;
   --info-fundo: #e0e7ff;
   --neutro-fundo: #f1f5f9;
-  /* Perfis */
-  --perfil-colaborador: #059669;
-  --perfil-gestor: #0284c7;
-  --perfil-rh: #4f46e5;
   /* Forma */
   --raio: 8px;
   --raio-controle: 6px;
@@ -917,12 +913,6 @@ input[type='range'] {
   white-space: nowrap;
 }
 
-.carregando {
-  color: var(--texto-suave);
-  padding: 28px;
-  text-align: center;
-}
-
 .vazio {
   color: var(--texto-2);
   padding: 36px;
@@ -1047,14 +1037,6 @@ th.num {
 td.acoes {
   text-align: right;
   white-space: nowrap;
-}
-
-tr.destaque-bom td {
-  background: var(--primaria-clara);
-}
-
-tr.destaque-atencao td {
-  background: #fffbeb;
 }
 
 /* ---------- Indicadores ---------- */

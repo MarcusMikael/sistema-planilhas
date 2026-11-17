@@ -1,7 +1,11 @@
+# A imagem do backend só precisa de pom.xml, mvnw, .mvn/ e src/. O resto fica fora do contexto do build.
 .git
 .github
+.claude
 frontend
 target
-.data
-.env
 data
+docs
+scripts
+*.md
+.env
