@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { useAcao, useApi } from '../hooks.js';
+import { useAcao, useApi, useAvisoSaida } from '../hooks.js';
 import { Alerta, Cartao, Carregando, Pagina } from '../components/ui.jsx';
 import { ESCALA_CLIMA, fmtData } from '../format.js';
 
@@ -11,6 +11,8 @@ export default function ClimaResponder() {
   const [respostas, setRespostas] = useState({});
   const [enviado, setEnviado] = useState(false);
   const acao = useAcao();
+  useAvisoSaida(!enviado && Object.values(respostas).some((v) => v !== '' && v !== undefined),
+    'Suas respostas ainda não foram enviadas. Sair mesmo assim e descartá-las?');
 
   if (pesquisa.carregando) return <Carregando />;
   if (pesquisa.erro) return <Pagina titulo="Pesquisa de clima"><Alerta erro={pesquisa.erro} /></Pagina>;

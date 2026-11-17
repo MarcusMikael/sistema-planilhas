@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import {
+  Award, Building2, CalendarRange, ChartColumn, ClipboardCheck, History, KeyRound, LayoutDashboard, LayoutGrid,
+  LogOut, Menu, MessageSquareHeart, Sprout, Table2, UserCog, Users, X,
+} from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { ROTULOS } from '../format.js';
+import { useBloqueioSaida } from '../hooks.js';
+import ErroBoundary from './ErroBoundary.jsx';
+import { Carregando } from './ui.jsx';
+
+const ICONE = { size: 18, strokeWidth: 1.5, 'aria-hidden': true };
 
 /** Menu organizado pelos três perfis (RNF-USA-01). */
 function itensMenu({ isRH, isGestor, usuario }) {
@@ -10,40 +18,43 @@ function itensMenu({ isRH, isGestor, usuario }) {
   const grupos = [];
   grupos.push({
     titulo: null,
-    itens: [{ para: '/', rotulo: isRH || isGestor ? 'Painel' : 'Início', fim: true }],
+    itens: [{ para: '/', rotulo: isRH || isGestor ? 'Painel' : 'Início', fim: true, Icone: LayoutDashboard }],
   });
   if (isRH) {
     grupos.push({
       titulo: 'Cadastros',
       itens: [
-        { para: '/colaboradores', rotulo: 'Colaboradores' },
-        { para: '/usuarios', rotulo: 'Usuários e acessos' },
-        { para: '/cadastros', rotulo: 'Departamentos e cargos' },
+        { para: '/colaboradores', rotulo: 'Colaboradores', Icone: Users },
+        { para: '/usuarios', rotulo: 'Usuários e acessos', Icone: KeyRound },
+        { para: '/cadastros', rotulo: 'Departamentos e cargos', Icone: Building2 },
       ],
     });
   }
   const desempenho = [];
   if (isRH) {
-    desempenho.push({ para: '/competencias', rotulo: 'Competências' });
-    desempenho.push({ para: '/ciclos', rotulo: 'Ciclos de avaliação' });
+    desempenho.push({ para: '/competencias', rotulo: 'Competências', Icone: Award });
+    desempenho.push({ para: '/ciclos', rotulo: 'Ciclos de avaliação', Icone: CalendarRange });
   }
   if (temColaborador) {
-    desempenho.push({ para: '/avaliacoes', rotulo: isGestor || usuario.ehGestorDeEquipe ? 'Avaliações' : 'Minha autoavaliação' });
+    desempenho.push({
+      para: '/avaliacoes', rotulo: isGestor || usuario.ehGestorDeEquipe ? 'Avaliações' : 'Minha autoavaliação',
+      Icone: ClipboardCheck,
+    });
   }
-  desempenho.push({ para: '/resultados', rotulo: isRH || isGestor ? 'Resultados' : 'Meus resultados' });
+  desempenho.push({ para: '/resultados', rotulo: isRH || isGestor ? 'Resultados' : 'Meus resultados', Icone: ChartColumn });
   if (isRH || isGestor) {
-    desempenho.push({ para: '/mapa-competencias', rotulo: 'Mapa de competências' });
-    desempenho.push({ para: '/nine-box', rotulo: 'Matriz Nine Box' });
+    desempenho.push({ para: '/mapa-competencias', rotulo: 'Mapa de competências', Icone: Table2 });
+    desempenho.push({ para: '/nine-box', rotulo: 'Matriz Nine Box', Icone: LayoutGrid });
   }
   grupos.push({ titulo: 'Desempenho', itens: desempenho });
 
-  const desenvolvimento = [{ para: '/pdis', rotulo: isRH || isGestor ? 'PDIs' : 'Meu PDI' }];
-  if (isGestor) desenvolvimento.push({ para: '/colaboradores', rotulo: 'Minha equipe' });
-  desenvolvimento.push({ para: '/historico', rotulo: 'Histórico' });
+  const desenvolvimento = [{ para: '/pdis', rotulo: isRH || isGestor ? 'PDIs' : 'Meu PDI', Icone: Sprout }];
+  if (isGestor) desenvolvimento.push({ para: '/colaboradores', rotulo: 'Minha equipe', Icone: Users });
+  desenvolvimento.push({ para: '/historico', rotulo: 'Histórico', Icone: History });
   grupos.push({ titulo: 'Desenvolvimento', itens: desenvolvimento });
 
-  grupos.push({ titulo: 'Clima', itens: [{ para: '/clima', rotulo: 'Pesquisa de clima' }] });
-  grupos.push({ titulo: 'Conta', itens: [{ para: '/conta', rotulo: 'Minha conta' }] });
+  grupos.push({ titulo: 'Clima', itens: [{ para: '/clima', rotulo: 'Pesquisa de clima', Icone: MessageSquareHeart }] });
+  grupos.push({ titulo: 'Conta', itens: [{ para: '/conta', rotulo: 'Minha conta', Icone: UserCog }] });
   return grupos;
 }
 
@@ -51,29 +62,56 @@ export default function Layout() {
   const auth = useAuth();
   const [aberto, setAberto] = useState(false);
   const local = useLocation();
-  useEffect(() => setAberto(false), [local.pathname]);
+  const botaoMenu = useRef(null);
+  const menu = useRef(null);
+  useBloqueioSaida();
+
+  // Fecha a gaveta ao trocar de página (ajuste de estado durante a renderização, sem efeito)
+  const [rota, setRota] = useState(local.pathname);
+  if (rota !== local.pathname) {
+    setRota(local.pathname);
+    setAberto(false);
+  }
+
+  // Gaveta (telas pequenas): Esc fecha e o foco volta ao botão; ao abrir, o foco vai para o primeiro link.
+  useEffect(() => {
+    if (!aberto) return undefined;
+    menu.current?.querySelector('a')?.focus();
+    const tecla = (e) => {
+      if (e.key === 'Escape') {
+        setAberto(false);
+        botaoMenu.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', tecla);
+    return () => window.removeEventListener('keydown', tecla);
+  }, [aberto]);
 
   return (
     <div className="app">
-      <div className="topo-movel">
-        <button onClick={() => setAberto((a) => !a)} aria-label="Abrir menu">☰</button>
+      <a className="pular" href="#conteudo">Pular para o conteúdo</a>
+      <header className="topo-movel">
+        <button ref={botaoMenu} className="btn-menu" onClick={() => setAberto((a) => !a)}
+          aria-label={aberto ? 'Fechar menu' : 'Abrir menu'} aria-expanded={aberto} aria-controls="menu-principal">
+          {aberto ? <X {...ICONE} /> : <Menu {...ICONE} />}
+        </button>
+        <div className="marca-logo" aria-hidden="true">S</div>
         <strong>SDPP</strong>
-      </div>
-      <nav className={`lateral ${aberto ? 'aberta' : ''}`} aria-label="Menu principal">
-        <div className="marca">
-          <div className="marca-logo">S</div>
-          <div>
-            <strong>SDPP</strong>
-            <small>Desenvolvimento e Performance</small>
-          </div>
-        </div>
+        <span className="espaco" />
+        <span className={`perfil-badge perfil-${auth.usuario.perfil}`}>
+          Visão {ROTULOS.perfil[auth.usuario.perfil]}
+        </span>
+      </header>
+      {aberto && <div className="lateral-fundo" onClick={() => setAberto(false)} aria-hidden="true" />}
+      <nav id="menu-principal" ref={menu} className={`lateral ${aberto ? 'aberta' : ''}`} aria-label="Menu principal">
         {itensMenu(auth).map((g, i) => (
           <div key={i}>
             {g.titulo && <div className="menu-grupo">{g.titulo}</div>}
-            {g.itens.map((it) => (
-              <NavLink key={it.para + it.rotulo} to={it.para} end={it.fim}
+            {g.itens.map(({ para, rotulo, fim, Icone }) => (
+              <NavLink key={para + rotulo} to={para} end={fim}
                 className={({ isActive }) => (isActive ? 'ativo' : undefined)}>
-                {it.rotulo}
+                <Icone {...ICONE} />
+                {rotulo}
               </NavLink>
             ))}
           </div>
@@ -82,12 +120,16 @@ export default function Layout() {
           <strong>{auth.usuario.nome}</strong>
           <span>{ROTULOS.perfil[auth.usuario.perfil]}</span>
           <div>
-            <button onClick={auth.sair}>Sair</button>
+            <button onClick={auth.sair}><LogOut size={16} strokeWidth={1.5} aria-hidden="true" /> Sair</button>
           </div>
         </div>
       </nav>
-      <main className="conteudo">
-        <Outlet />
+      <main className="conteudo" id="conteudo" tabIndex={-1}>
+        <ErroBoundary key={local.pathname}>
+          <Suspense fallback={<Carregando />}>
+            <Outlet />
+          </Suspense>
+        </ErroBoundary>
       </main>
     </div>
   );

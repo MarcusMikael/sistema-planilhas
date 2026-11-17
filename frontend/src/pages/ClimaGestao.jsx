@@ -46,9 +46,9 @@ export default function ClimaGestao() {
           if (window.confirm('Publicar a campanha? Depois disso as perguntas não poderão ser alteradas.')) exec(() => api.post(`/pesquisas-clima/${id}/publicar`));
         }}>Publicar</button>}
         {p.status === 'PUBLICADA' && <button onClick={() => {
-          if (window.confirm('Encerrar a campanha? Ninguém mais poderá responder.')) exec(() => api.post(`/pesquisas-clima/${id}/encerrar`));
+          if (window.confirm('Encerrar a campanha? Ninguém mais poderá responder e os resultados agregados serão liberados.')) exec(() => api.post(`/pesquisas-clima/${id}/encerrar`));
         }}>Encerrar</button>}
-        {!rascunho && <Link className="btn" to={`/clima/${id}/resultados`}>Resultados</Link>}
+        {p.status === 'ENCERRADA' && <Link className="btn" to={`/clima/${id}/resultados`}>Resultados</Link>}
         {rascunho && <button className="btn-perigo" onClick={() => {
           if (window.confirm('Excluir esta campanha?')) exec(() => api.del(`/pesquisas-clima/${id}`), () => navegar('/clima'));
         }}>Excluir</button>}

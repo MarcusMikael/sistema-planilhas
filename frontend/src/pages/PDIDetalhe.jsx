@@ -5,7 +5,7 @@ import { useAuth } from '../auth.jsx';
 import { useAcao, useApi } from '../hooks.js';
 import { Alerta, Badge, Campo, Cartao, Carregando, Modal, Pagina, Progresso, Seletor, Vazio } from '../components/ui.jsx';
 import { ROTULOS, fmtData } from '../format.js';
-import { FormPDI } from './PDIs.jsx';
+import { FormPDI } from '../components/FormPDI.jsx';
 
 const ACAO_VAZIA = { descricao: '', dataInicio: '', dataTermino: '', entrega: '', recursos: '', status: 'A_FAZER', progresso: 0 };
 const opcoesStatus = Object.entries(ROTULOS.statusAcao).map(([valor, rotulo]) => ({ valor, rotulo }));

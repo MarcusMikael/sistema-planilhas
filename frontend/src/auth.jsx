@@ -1,18 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { api, getToken, setToken } from './api.js';
+import { api } from './api.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
-  const [carregando, setCarregando] = useState(Boolean(getToken()));
+  const [carregando, setCarregando] = useState(true);
 
+  // O cookie de sessão é HttpOnly: a única forma de saber se há sessão é perguntar ao backend.
   useEffect(() => {
-    if (!getToken()) return;
     api
       .get('/auth/me')
       .then(setUsuario)
-      .catch(() => setToken(null))
+      .catch(() => setUsuario(null))
       .finally(() => setCarregando(false));
   }, []);
 
@@ -24,14 +24,16 @@ export function AuthProvider({ children }) {
 
   const entrar = useCallback(async (email, senha) => {
     const resp = await api.post('/auth/login', { email, senha });
-    setToken(resp.token);
     setUsuario(resp.usuario);
     return resp.usuario;
   }, []);
 
-  const sair = useCallback(() => {
-    setToken(null);
-    setUsuario(null);
+  const sair = useCallback(async () => {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      setUsuario(null);
+    }
   }, []);
 
   const valor = {
@@ -46,6 +48,7 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }

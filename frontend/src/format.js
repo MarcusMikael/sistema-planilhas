@@ -50,10 +50,13 @@ export function tomStatus(status) {
     case 'ATIVO':
       return 'ok';
     case 'EM_ANDAMENTO':
+      return 'aviso'; // Em andamento / pendente: âmbar
     case 'LIBERADO':
-      return 'info';
+      return 'info'; // Ciclo em avaliação, sob acompanhamento do RH: índigo
     case 'CANCELADO':
     case 'ENCERRADA':
+    case 'RASCUNHO':
+    case 'A_FAZER':
       return 'neutro';
     case 'ERRO':
       return 'erro';

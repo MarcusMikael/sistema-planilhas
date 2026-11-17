@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.jayway.jsonpath.JsonPath;
 
 import sdpp_backend.config.DataInitializer;
+import sdpp_backend.security.CookieSessao;
 
 /**
  * Testes de integração da API com os dados fictícios de demonstração.
@@ -85,6 +86,77 @@ class SdppBackendApplicationTests {
         mvc.perform(get("/api/colaboradores")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/colaboradores").header("Authorization", "Bearer token.invalido.x"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Rota de saúde é pública e não expõe dados")
+    void saude() throws Exception {
+        mvc.perform(get("/api/saude"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"))
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    @DisplayName("Sessão do navegador em cookie HttpOnly, com proteção contra CSRF e logout")
+    void sessaoPorCookie() throws Exception {
+        var login = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"joana@sdpp.local\",\"senha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+        String setCookie = login.getHeader("Set-Cookie");
+        org.assertj.core.api.Assertions.assertThat(setCookie)
+                .startsWith(CookieSessao.NOME + "=").contains("HttpOnly").contains("SameSite=Lax").contains("Path=/api");
+        var cookie = new jakarta.servlet.http.Cookie(CookieSessao.NOME, login.getCookie(CookieSessao.NOME).getValue());
+
+        mvc.perform(get("/api/auth/me").cookie(cookie))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.email").value("joana@sdpp.local"));
+        String senhaErrada = "{\"senhaAtual\":\"errada\",\"novaSenha\":\"qualquer-1\"}";
+        // Pelo cookie, alterar dados sem o cabeçalho anti-CSRF não autentica
+        mvc.perform(post("/api/auth/senha").cookie(cookie).contentType(MediaType.APPLICATION_JSON).content(senhaErrada))
+                .andExpect(status().isUnauthorized());
+        // Com o cabeçalho, a requisição é autenticada (e recusada só pela senha atual errada)
+        mvc.perform(post("/api/auth/senha").cookie(cookie).header(CookieSessao.CABECALHO_CSRF, "1")
+                        .contentType(MediaType.APPLICATION_JSON).content(senhaErrada))
+                .andExpect(status().isUnprocessableContent());
+
+        String logout = mvc.perform(post("/api/auth/logout").cookie(cookie).header(CookieSessao.CABECALHO_CSRF, "1"))
+                .andExpect(status().isNoContent())
+                .andReturn().getResponse().getHeader("Set-Cookie");
+        org.assertj.core.api.Assertions.assertThat(logout).contains("Max-Age=0");
+    }
+
+    @Test
+    @DisplayName("Login: tentativas repetidas com senha errada são bloqueadas (HTTP 429)")
+    void limiteDeTentativas() throws Exception {
+        String corpo = "{\"email\":\"forca.bruta@sdpp.local\",\"senha\":\"chute\"}";
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                    .andExpect(status().isUnauthorized());
+        }
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(corpo))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    @DisplayName("Trocar a senha invalida os tokens anteriores e devolve um token novo")
+    void trocaDeSenhaRevogaTokens() throws Exception {
+        String antigo = token("pedro@sdpp.local");
+        String resp = mvc.perform(post("/api/auth/senha").header("Authorization", "Bearer " + antigo)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"senhaAtual\":\"" + DataInitializer.SENHA_DEMO + "\",\"novaSenha\":\"nova-senha-1\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String novo = JsonPath.read(resp, "$.token");
+        mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + antigo))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/auth/me").header("Authorization", "Bearer " + novo))
+                .andExpect(status().isOk());
+        // Restaura a senha de demonstração para os demais testes
+        mvc.perform(post("/api/auth/senha").header("Authorization", "Bearer " + novo)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"senhaAtual\":\"nova-senha-1\",\"novaSenha\":\"" + DataInitializer.SENHA_DEMO + "\"}"))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -354,13 +426,27 @@ class SdppBackendApplicationTests {
         mvc.perform(como("rh@sdpp.local", get("/api/respostas"))).andExpect(status().isNotFound());
         mvc.perform(como("gestor@sdpp.local", get("/api/pesquisas-clima/" + id + "/resultados")))
                 .andExpect(status().isForbidden());
+        // Com a campanha aberta, comparar consultas revelaria a última resposta: resultados só após encerrar
+        mvc.perform(como("rh@sdpp.local", get("/api/pesquisas-clima/" + id + "/resultados")))
+                .andExpect(status().isUnprocessableContent());
+    }
+
+    @Test
+    @DisplayName("RN-06: setor pequeno não pode ser deduzido por subtração do total")
+    void climaSemDeducaoPorSubtracao() throws Exception {
+        String lista = json("rh@sdpp.local", get("/api/pesquisas-clima"));
+        Integer id = JsonPath.<List<Integer>>read(lista, "$[?(@.titulo == 'Pesquisa de Clima 2025')].id").get(0);
         String resultados = json("rh@sdpp.local", get("/api/pesquisas-clima/" + id + "/resultados"));
         org.assertj.core.api.Assertions.assertThat(resultados)
-                .doesNotContain("colaborador").doesNotContain("gestor@sdpp.local");
+                .doesNotContain("colaborador").doesNotContain("@sdpp.local");
+        // Tecnologia (5) e Comercial (1): exibir Tecnologia permitiria calcular a resposta do Comercial
+        // (6 × média geral − 5 × média de Tecnologia); os dois são reunidos em um grupo de 6.
         mvc.perform(como("rh@sdpp.local", get("/api/pesquisas-clima/" + id + "/resultados")))
                 .andExpect(jsonPath("$.totalParticipacoes").value(6))
                 .andExpect(jsonPath("$.perguntas[1].exibido").value(true))
-                .andExpect(jsonPath("$.perguntas[1].porSetor[*].setor", hasItem("Tecnologia")))
+                .andExpect(jsonPath("$.perguntas[1].porSetor.length()").value(1))
+                .andExpect(jsonPath("$.perguntas[1].porSetor[0].totalRespostas").value(6))
+                .andExpect(jsonPath("$.perguntas[1].porSetor[*].setor", not(hasItem("Tecnologia"))))
                 .andExpect(jsonPath("$.perguntas[1].porSetor[*].setor", not(hasItem("Comercial"))));
     }
 

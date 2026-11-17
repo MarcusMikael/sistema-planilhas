@@ -171,7 +171,10 @@ Dados já carregados:
 - catálogo de 20 competências e os 9 quadrantes da Nine Box, conforme as planilhas;
 - **Ciclo 2025/2**, com resultados liberados e Nine Box parcialmente preenchida;
 - **Ciclo 2026/1**, aberto para avaliações;
-- um PDI e uma pesquisa de clima publicada, já com 5 respostas.
+- um PDI;
+- a **Pesquisa de Clima 2026**, publicada e já com 5 respostas;
+- a **Pesquisa de Clima 2025**, encerrada, para ver os resultados agregados (o Comercial, com uma só resposta,
+  aparece agrupado com Tecnologia).
 
 **Sugestão de roteiro para conhecer o sistema:**
 
@@ -209,14 +212,14 @@ cd frontend && npm run build                 # gera frontend/dist (arquivos est�
 
 ## Testes
 
-**Testes automatizados do backend.** São 29 testes: os casos dourados de cálculo do DRS (Seção 6.1) e os
+**Testes automatizados do backend.** São 43 testes: os casos dourados de cálculo do DRS (Seção 6.1) e os
 critérios de aceitação de permissões e regras de negócio. Usam um banco H2 em memória.
 
 ```bash
 ./mvnw test
 ```
 
-**Teste ponta a ponta da API.** São 199 verificações contra o servidor real, incluindo:
+**Teste ponta a ponta da API.** São 200 verificações contra o servidor real, incluindo:
 
 - um ciclo completo com os três perfis;
 - a matriz de permissões;
@@ -227,6 +230,16 @@ Requer o backend no ar com o banco de demonstração recém-criado (apague `data
 
 ```bash
 node scripts/e2e-api.mjs
+```
+
+**Testes e lint do frontend.** Vitest + Testing Library (30 testes: login por cookie, aviso de servidor lento, controle de notas,
+modal com alterações não salvas, aviso ao sair da página, Error Boundary e corrida de requisições no `useApi`)
+e ESLint com as regras de hooks do React.
+
+```bash
+cd frontend
+npm test
+npm run lint
 ```
 
 ---
@@ -268,13 +281,14 @@ pelo RH ou pelo professor:
 | `sdpp.ninebox.limite-medio` / `limite-alto` | 2.5 / 3.75 | Faixas para sugerir o desempenho na Nine Box |
 | `sdpp.clima.minimo-respostas` | 5 | Mínimo de respostas para exibir um resultado de clima |
 | `sdpp.jwt.expiracao-horas` | 8 | Duração da sessão |
-| `sdpp.seed.demo` | `true` em dev | Carrega os dados de demonstração |
+| `sdpp.seed.demo` | `true` só no perfil dev | Carrega os dados de demonstração |
 
 ---
 
 ## Produção e deploy
 
-Backend com o perfil `prod` e PostgreSQL, configurado por variáveis de ambiente:
+Backend com o perfil `prod` e PostgreSQL, configurado por variáveis de ambiente. O `Dockerfile` já define
+`SPRING_PROFILES_ACTIVE=prod` e roda a aplicação sem privilégios de root:
 
 | Variável | Exemplo |
 |---|---|
@@ -282,7 +296,8 @@ Backend com o perfil `prod` e PostgreSQL, configurado por variáveis de ambiente
 | `DATABASE_URL` | `jdbc:postgresql://host:5432/sdpp` |
 | `DATABASE_USERNAME` / `DATABASE_PASSWORD` | credenciais do banco |
 | `SDPP_JWT_SECRET` | segredo aleatório com 32 ou mais caracteres (**obrigatório**: sem ele o backend não sobe) |
-| `SDPP_CORS_ORIGENS` | URL do frontend, ex.: `https://sdpp.vercel.app` |
+| `SDPP_CORS_ORIGENS` | URL do frontend, ex.: `https://sdpp.vercel.app` (com o proxy da Vercel o CORS nem chega a ser usado) |
+| `SDPP_COOKIE_SECURE` / `SDPP_COOKIE_SAMESITE` | padrão `true` / `Lax` no perfil prod; não precisa alterar |
 | `SDPP_SEED_DEMO` | `true` só se quiser os dados de demonstração |
 
 > **Use um banco PostgreSQL novo.** O esquema mudou em relação à versão anterior do backend: as colunas
@@ -294,9 +309,40 @@ Frontend na **Vercel**:
 - diretório raiz: `frontend`;
 - comando de build: `npm run build`;
 - pasta de saída: `dist`;
-- variável `VITE_API_URL` com a URL pública do backend.
+- **não** defina `VITE_API_URL`: o frontend chama `/api` no próprio domínio.
 
-O `vercel.json` já redireciona as rotas da aplicação para o `index.html`.
+O `vercel.json` faz duas coisas:
+
+1. **Repassa `/api` ao backend (proxy).** Troque `SEU-BACKEND.onrender.com` pela URL real do serviço no Render
+   antes do deploy. Assim frontend e API ficam no mesmo domínio e o cookie de sessão funciona em todos os
+   navegadores, inclusive Safari e iPhone (que bloqueiam cookies entre domínios diferentes).
+2. Redireciona as demais rotas da aplicação para o `index.html`.
+
+### Sessão
+
+O login grava o token em um cookie `HttpOnly` (`sdpp_sessao`, `SameSite=Lax`, `Secure` em produção): o
+JavaScript da página não tem acesso a ele, então um eventual XSS não consegue roubar a sessão. Requisições que
+alteram dados com autenticação por cookie exigem o cabeçalho `X-SDPP-CSRF` (proteção contra CSRF), que o
+frontend envia sempre. Clientes de API (testes, `scripts/e2e-api.mjs`) continuam usando
+`Authorization: Bearer <token>` com o token devolvido no corpo do login.
+
+### Primeiro acesso lento (Render gratuito)
+
+No plano gratuito, o Render desliga o backend depois de cerca de 15 minutos sem uso. O próximo acesso precisa
+religar o contêiner e iniciar o Spring Boot, o que pode levar de 30 segundos a 1 minuto. O que já foi feito:
+
+- **Aviso na tela:** se uma requisição passar de 3 segundos, aparece "Acordando o servidor…", para a tela
+  parada não parecer um erro.
+- **Inicialização mais rápida:** o `Dockerfile` extrai o jar e gera um arquivo de CDS (Class Data Sharing)
+  durante o build, além de usar ajustes da JVM para pouca CPU (`JAVA_OPTS`). Em medição local, o tempo até o
+  contexto do Spring ficar pronto caiu de cerca de 9,3 s para 4,9 s.
+- **Rota de saúde:** `GET /api/saude` é pública e leve (não consulta o banco). Use-a no campo *Health Check
+  Path* do Render.
+
+Para eliminar a espera de vez: use uma instância paga do Render (não desliga) ou, perto de apresentações,
+configure um serviço de ping gratuito (por exemplo, UptimeRobot) para chamar
+`https://SEU-BACKEND.onrender.com/api/saude` a cada 10 minutos. Um único serviço ligado o mês inteiro cabe
+nas horas gratuitas do Render, mas é um contorno que o próprio Render não recomenda.
 
 > **Risco R-01 (Arquitetura 7.2):** a Vercel não executa Java. A proposta é publicar o frontend na Vercel e o
 > backend em uma plataforma com JVM ou contêiner (Render, Railway, Fly.io etc.). Confirmar com o professor.
@@ -328,7 +374,8 @@ Todas as rotas ficam em `/api` e, exceto `POST /api/auth/login`, exigem o cabeç
 | `/api/avaliacoes` | `pendentes`, abrir, `/{id}/notas`, `/{id}/concluir` |
 | `/api/nine-box` | matriz por ciclo, registro do gestor, `quadrantes` |
 | `/api/pdis`, `/api/acoes-pdi` | PDI e ações; `PATCH /acoes-pdi/{id}/progresso` |
-| `/api/pesquisas-clima` | campanhas, perguntas, `publicar`, `encerrar`, `respostas`, `resultados` (só agregados) |
+| `/api/auth` | `login` (5 senhas erradas em 15 min bloqueiam o e-mail: HTTP 429), `me`, `senha` (devolve um token novo e invalida os anteriores) |
+| `/api/pesquisas-clima` | campanhas, perguntas, `publicar`, `encerrar`, `respostas`, `resultados` (só agregados e só depois de encerrar) |
 | `/api/indicadores` | indicadores no escopo do perfil |
 
 ---
@@ -342,7 +389,7 @@ Todas as rotas ficam em `/api` e, exceto `POST /api/auth/login`, exigem o cabeç
 | RN-03/RN-12 eixos e quadrantes | `NineBoxModel` com eixos anuláveis + tabela `quadrante` |
 | RN-04 sem decisão automática | nenhuma ação é disparada pela Nine Box; o PDI é sempre criado manualmente |
 | RN-05 datas do PDI | `PDIService` (término ≥ início) |
-| RN-06/RN-10 clima anônimo e resposta única | `participacao_clima` separada de `resposta` (sem colaborador, sem horário, id UUID aleatório); mínimo de 5 respostas por grupo |
+| RN-06/RN-10 clima anônimo e resposta única | `participacao_clima` separada de `resposta` (sem colaborador, sem horário, id UUID aleatório); mínimo de 5 respostas por grupo; setores pequenos agrupados para impedir dedução por subtração (`AgrupamentoSetores`); resultados só após encerrar |
 | RN-07 escala 0–5 | Bean Validation + `AvaliacaoService` |
 | RN-08 5 + 5 competências | `CicloService.selecionarCompetencias` / `liberar` |
 | RN-09 liberação de resultados | `ResultadoService` / `AvaliacaoService` (visibilidade) |

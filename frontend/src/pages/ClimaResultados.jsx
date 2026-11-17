@@ -16,19 +16,19 @@ export default function ClimaResultados() {
 
   return (
     <Pagina titulo={`Resultados — ${r.titulo}`}
-      subtitulo={`Somente resultados agregados. Grupos com menos de ${r.minimoRespostas} respostas não são exibidos.`}
+      subtitulo={`Somente resultados agregados. Todo grupo exibido tem pelo menos ${r.minimoRespostas} respostas; setores menores são agrupados.`}
       acoes={<><Badge status={r.status} grupo="statusPesquisa" /><Link className="btn" to="/clima">Voltar</Link></>}>
       <div className="grade grade-3">
         <Indicador rotulo="Participações" valor={r.totalParticipacoes} />
         <Indicador rotulo="Média geral (escala 1 a 5)" valor={fmtNum(mediaGeral)} detalhe="Média das perguntas exibidas" />
         <Indicador rotulo="Mínimo para exibição" valor={r.minimoRespostas} detalhe="respostas por grupo" />
       </div>
-      {setor && (
+      {setor && setor.porSetor.length > 0 && (
         <Cartao titulo="Participação por setor">
           <table>
             <tbody>
               {setor.porSetor.map((s) => (
-                <tr key={s.setor}><td>{s.setor}</td><td className="num">{s.exibido ? s.totalRespostas : `menos de ${r.minimoRespostas}`}</td></tr>
+                <tr key={s.setor}><td>{s.setor}</td><td className="num">{s.totalRespostas}</td></tr>
               ))}
             </tbody>
           </table>
@@ -56,8 +56,8 @@ export default function ClimaResultados() {
                   {q.porSetor.map((s) => (
                     <tr key={s.setor}>
                       <td>{s.setor}</td>
-                      <td className="num">{s.exibido ? s.totalRespostas : `< ${r.minimoRespostas}`}</td>
-                      <td className="num">{s.exibido ? fmtNum(s.media) : 'oculto'}</td>
+                      <td className="num">{s.totalRespostas}</td>
+                      <td className="num">{fmtNum(s.media)}</td>
                     </tr>
                   ))}
                 </tbody>

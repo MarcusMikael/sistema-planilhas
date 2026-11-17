@@ -21,6 +21,7 @@ export default function Conta() {
       return;
     }
     try {
+      // A troca invalida as sessões anteriores; o backend renova o cookie desta sessão
       await acao.executar(() => api.post('/auth/senha', { senhaAtual: atual, novaSenha: nova }));
       setOk(true);
       setAtual('');

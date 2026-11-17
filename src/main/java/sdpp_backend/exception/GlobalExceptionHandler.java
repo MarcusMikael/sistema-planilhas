@@ -47,6 +47,11 @@ public class GlobalExceptionHandler {
         return erro(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(MuitasTentativasException.class)
+    public ResponseEntity<ErroResponse> muitasTentativas(MuitasTentativasException ex) {
+        return erro(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), null);
+    }
+
     @ExceptionHandler(RegraNegocioException.class)
     public ResponseEntity<ErroResponse> regraNegocio(RegraNegocioException ex) {
         return erro(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage(), null);

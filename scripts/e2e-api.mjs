@@ -186,18 +186,20 @@ for (const [quem, v] of Object.entries(valores)) {
 }
 esperar('Marina responde de novo', await req(T.marina, 'POST', `/pesquisas-clima/${p.id}/respostas`, respostas(4)), 409);
 esperar('gestor não vê resultados', await req(T.carlos, 'GET', `/pesquisas-clima/${p.id}/resultados`), 403);
-const res = esperar('RH vê resultados', await req(T.rh, 'GET', `/pesquisas-clima/${p.id}/resultados`), 200);
+esperar('RH não vê resultados com a campanha aberta', await req(T.rh, 'GET', `/pesquisas-clima/${p.id}/resultados`), 422);
+esperar('encerrar', await req(T.rh, 'POST', `/pesquisas-clima/${p.id}/encerrar`), 200);
+const res = esperar('RH vê resultados após encerrar', await req(T.rh, 'GET', `/pesquisas-clima/${p.id}/resultados`), 200);
 check('6 participações', res.totalParticipacoes === 6);
 const q2 = res.perguntas.find((q) => q.ordem === 2);
 check('média geral (4+5+3+4+4+2)/6 = 3,67', q2.media === 3.67, q2.media);
-check('Tecnologia exibida com média 4,0', q2.porSetor.find((s) => s.setor === 'Tecnologia')?.media === 4.0, JSON.stringify(q2.porSetor));
-const com = q2.porSetor.find((s) => s.setor === 'Comercial');
-check('Comercial (1 resposta) oculto', com && !com.exibido && com.media === null, JSON.stringify(com));
+// Tecnologia (5) + Comercial (1): exibir Tecnologia permitiria deduzir a resposta do Comercial por subtração
+check('setores reunidos em um grupo de 6', q2.porSetor.length === 1 && q2.porSetor[0].totalRespostas === 6
+  && q2.porSetor[0].media === 3.67, JSON.stringify(q2.porSetor));
+check('Tecnologia e Comercial não aparecem isolados', !q2.porSetor.some((s) => ['Tecnologia', 'Comercial'].includes(s.setor)));
 check('textos exibidos (6 >= 5)', res.perguntas.find((q) => q.perguntaId === extra.id).respostasTexto?.length === 6);
 const bruto = JSON.stringify(res);
 check('resultado sem identificação', !/marina|pedro|colaborador/i.test(bruto));
 check('rota de respostas individuais inexistente', (await req(T.rh, 'GET', '/respostas')).status === 404);
-esperar('encerrar', await req(T.rh, 'POST', `/pesquisas-clima/${p.id}/encerrar`), 200);
 esperar('responder encerrada', await req(T.carlos, 'POST', `/pesquisas-clima/${p.id}/respostas`, respostas(3)), 422);
 
 // ---------- Indicadores e histórico ----------

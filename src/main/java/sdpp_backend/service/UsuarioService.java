@@ -84,6 +84,8 @@ public class UsuarioService {
         usuario.setAtivo(ativo);
         if (req.senha() != null && !req.senha().isBlank()) {
             usuario.setSenha(passwordEncoder.encode(req.senha()));
+            // Senha redefinida pelo RH: encerra as sessões abertas com a senha anterior
+            usuario.revogarTokens();
         }
         colaboradorRepository.findByUsuarioId(usuario.getId()).ifPresent(c -> {
             if (!c.getId().equals(req.colaboradorId())) {

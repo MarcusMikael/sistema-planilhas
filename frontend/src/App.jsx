@@ -1,28 +1,32 @@
+import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth.jsx';
 import Layout from './components/Layout.jsx';
 import { Carregando } from './components/ui.jsx';
 import Login from './pages/Login.jsx';
 import Painel from './pages/Painel.jsx';
-import Colaboradores from './pages/Colaboradores.jsx';
-import Usuarios from './pages/Usuarios.jsx';
-import Cadastros from './pages/Cadastros.jsx';
-import Competencias from './pages/Competencias.jsx';
-import Ciclos from './pages/Ciclos.jsx';
-import CicloDetalhe from './pages/CicloDetalhe.jsx';
-import Avaliacoes from './pages/Avaliacoes.jsx';
-import AvaliacaoForm from './pages/AvaliacaoForm.jsx';
-import Resultados from './pages/Resultados.jsx';
-import MapaCompetencias from './pages/MapaCompetencias.jsx';
-import NineBox from './pages/NineBox.jsx';
-import PDIs from './pages/PDIs.jsx';
-import PDIDetalhe from './pages/PDIDetalhe.jsx';
-import Clima from './pages/Clima.jsx';
-import ClimaResponder from './pages/ClimaResponder.jsx';
-import ClimaGestao from './pages/ClimaGestao.jsx';
-import ClimaResultados from './pages/ClimaResultados.jsx';
-import Historico from './pages/Historico.jsx';
-import Conta from './pages/Conta.jsx';
+
+// Cada tela vira um arquivo separado, baixado só quando a rota é aberta
+// (o colaborador não baixa as telas de cadastro do RH, por exemplo).
+const Colaboradores = lazy(() => import('./pages/Colaboradores.jsx'));
+const Usuarios = lazy(() => import('./pages/Usuarios.jsx'));
+const Cadastros = lazy(() => import('./pages/Cadastros.jsx'));
+const Competencias = lazy(() => import('./pages/Competencias.jsx'));
+const Ciclos = lazy(() => import('./pages/Ciclos.jsx'));
+const CicloDetalhe = lazy(() => import('./pages/CicloDetalhe.jsx'));
+const Avaliacoes = lazy(() => import('./pages/Avaliacoes.jsx'));
+const AvaliacaoForm = lazy(() => import('./pages/AvaliacaoForm.jsx'));
+const Resultados = lazy(() => import('./pages/Resultados.jsx'));
+const MapaCompetencias = lazy(() => import('./pages/MapaCompetencias.jsx'));
+const NineBox = lazy(() => import('./pages/NineBox.jsx'));
+const PDIs = lazy(() => import('./pages/PDIs.jsx'));
+const PDIDetalhe = lazy(() => import('./pages/PDIDetalhe.jsx'));
+const Clima = lazy(() => import('./pages/Clima.jsx'));
+const ClimaResponder = lazy(() => import('./pages/ClimaResponder.jsx'));
+const ClimaGestao = lazy(() => import('./pages/ClimaGestao.jsx'));
+const ClimaResultados = lazy(() => import('./pages/ClimaResultados.jsx'));
+const Historico = lazy(() => import('./pages/Historico.jsx'));
+const Conta = lazy(() => import('./pages/Conta.jsx'));
 
 function SoRH({ children }) {
   const { isRH } = useAuth();

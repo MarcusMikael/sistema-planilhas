@@ -48,7 +48,7 @@ export default function Clima() {
                       <Link className="btn btn-primario" to={`/clima/${p.id}/responder`}>Responder</Link>
                     )}
                     {isRH && <Link className="btn-texto" to={`/clima/${p.id}/gestao`}>{p.status === 'RASCUNHO' ? 'Editar' : 'Gerenciar'}</Link>}
-                    {isRH && p.status !== 'RASCUNHO' && <Link className="btn-texto" to={`/clima/${p.id}/resultados`}>Resultados</Link>}
+                    {isRH && p.status === 'ENCERRADA' && <Link className="btn-texto" to={`/clima/${p.id}/resultados`}>Resultados</Link>}
                   </td>
                 </tr>
               ))}

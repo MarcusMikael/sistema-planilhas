@@ -1,8 +1,32 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { LoaderCircle, X } from 'lucide-react';
+import { observarLentidao, servidorLento } from '../api.js';
+import { MSG_ALTERACOES, useAvisoSaida } from '../hooks.js';
 import { ROTULOS, tomStatus } from '../format.js';
 
 export function Carregando({ texto = 'Carregando…' }) {
   return <div className="carregando" role="status">{texto}</div>;
+}
+
+/**
+ * Aviso exibido quando uma requisição demora (servidor acordando no plano gratuito do Render),
+ * para que a tela parada não pareça um erro.
+ */
+export function AvisoServidorLento() {
+  const lento = useSyncExternalStore(observarLentidao, servidorLento);
+  return (
+    <div className="aviso-lento-regiao" role="status" aria-live="polite">
+      {lento && (
+        <div className="aviso-lento">
+          <LoaderCircle className="girando" size={18} strokeWidth={1.5} aria-hidden="true" />
+          <div>
+            <strong>Acordando o servidor…</strong>
+            <span>Depois de um tempo sem uso, o primeiro acesso pode levar até 1 minuto. Não feche a página.</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Alerta({ erro, tipo = 'erro', children }) {
@@ -60,20 +84,36 @@ export function Cartao({ titulo, acoes, children, className = '' }) {
   );
 }
 
+/**
+ * Gaveta lateral. Se o usuário editar algum campo e tentar fechar (Esc, fundo, X) ou sair da página
+ * sem enviar o formulário, pede confirmação antes de descartar.
+ */
 export function Modal({ titulo, aberto, onFechar, children, largo }) {
+  const [sujo, setSujo] = useState(false);
+  useAvisoSaida(aberto && sujo);
+
+  // Ao fechar, esquece as edições (ajuste de estado durante a renderização, sem efeito)
+  if (!aberto && sujo) setSujo(false);
+
+  const fechar = useCallback(() => {
+    if (sujo && !window.confirm(MSG_ALTERACOES)) return;
+    onFechar();
+  }, [sujo, onFechar]);
+
   useEffect(() => {
     if (!aberto) return;
-    const esc = (e) => e.key === 'Escape' && onFechar();
+    const esc = (e) => e.key === 'Escape' && fechar();
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
-  }, [aberto, onFechar]);
+  }, [aberto, fechar]);
   if (!aberto) return null;
   return (
-    <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className={`modal ${largo ? 'modal-largo' : ''}`} role="dialog" aria-modal="true" aria-label={titulo}>
+    <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && fechar()}>
+      <div className={`modal ${largo ? 'modal-largo' : ''}`} role="dialog" aria-modal="true" aria-label={titulo}
+        onInput={() => setSujo(true)} onChange={() => setSujo(true)} onSubmit={() => setSujo(false)}>
         <div className="modal-cabecalho">
           <h2>{titulo}</h2>
-          <button className="btn-icone" onClick={onFechar} aria-label="Fechar">×</button>
+          <button className="btn-icone" onClick={fechar} aria-label="Fechar"><X size={20} strokeWidth={1.5} aria-hidden="true" /></button>
         </div>
         <div className="modal-corpo">{children}</div>
       </div>

@@ -28,6 +28,9 @@ public final class CadastroDTOs {
             @NotBlank(message = "Informe a senha") String senha) {
     }
 
+    public record TokenResponse(String token) {
+    }
+
     public record LoginResponse(String token, UsuarioAtualResponse usuario) {
     }
 

@@ -232,7 +232,7 @@ public class DataInitializer implements ApplicationRunner {
         var joana = pessoa("Joana D'Ávila", "joana@sdpp.local", Perfil.COLABORADOR, ti, dev, carlos, hoje.minusYears(1));
         var lucas = pessoa("Lucas Rocha", "lucas@sdpp.local", Perfil.COLABORADOR, ti, dev, carlos, hoje.minusMonths(18));
         var beatriz = pessoa("Beatriz Alves", "beatriz@sdpp.local", Perfil.COLABORADOR, ti, dados, carlos, hoje.minusMonths(10));
-        pessoa("Rafael Mendes", "rafael@sdpp.local", Perfil.COLABORADOR, comercial, vendedor, fernanda, hoje.minusMonths(30));
+        var rafael = pessoa("Rafael Mendes", "rafael@sdpp.local", Perfil.COLABORADOR, comercial, vendedor, fernanda, hoje.minusMonths(30));
         carlos.setGestor(ana);
         fernanda.setGestor(ana);
 
@@ -275,11 +275,23 @@ public class DataInitializer implements ApplicationRunner {
                 "Funcionalidade em produção", "Horas do time", StatusAcaoPDI.A_FAZER, 0);
 
         // Pesquisa de clima publicada, já respondida pelos 5 colaboradores de Tecnologia
+        int[][] valores = {{4, 5, 3, 4, 4}, {5, 4, 4, 3, 5}, {3, 4, 5, 4, 3}, {4, 3, 4, 5, 4}, {5, 5, 4, 4, 3}};
+        pesquisaClima("Pesquisa de Clima 2026", hoje.minusDays(10), hoje.plusDays(20), StatusPesquisa.PUBLICADA,
+                List.of(marina, pedro, joana, lucas, beatriz), valores);
+        // Pesquisa encerrada (resultados disponíveis); o Comercial tem uma só resposta e é agrupado (RN-06)
+        int[][] valoresAnterior = {{3, 4, 4, 3, 4}, {4, 4, 5, 3, 4}, {3, 3, 4, 4, 2}, {4, 5, 4, 4, 3}, {5, 4, 3, 4, 4},
+                {2, 3, 3, 2, 3}};
+        pesquisaClima("Pesquisa de Clima 2025", hoje.minusMonths(8), hoje.minusMonths(7), StatusPesquisa.ENCERRADA,
+                List.of(marina, pedro, joana, lucas, beatriz, rafael), valoresAnterior);
+    }
+
+    private void pesquisaClima(String titulo, LocalDate inicio, LocalDate fim, StatusPesquisa status,
+                               List<ColaboradorModel> respondentes, int[][] valores) {
         PesquisaClimaModel pesquisa = new PesquisaClimaModel();
-        pesquisa.setTitulo("Pesquisa de Clima 2026");
-        pesquisa.setDataInicio(hoje.minusDays(10));
-        pesquisa.setDataFim(hoje.plusDays(20));
-        pesquisa.setStatus(StatusPesquisa.PUBLICADA);
+        pesquisa.setTitulo(titulo);
+        pesquisa.setDataInicio(inicio);
+        pesquisa.setDataFim(fim);
+        pesquisa.setStatus(status);
         pesquisa = pesquisaRepository.save(pesquisa);
         List<PerguntaModel> perguntas = new ArrayList<>();
         int ordem = 1;
@@ -292,19 +304,17 @@ public class DataInitializer implements ApplicationRunner {
             p.setOrdem(ordem++);
             perguntas.add(perguntaRepository.save(p));
         }
-        int[][] valores = {{4, 5, 3, 4, 4}, {5, 4, 4, 3, 5}, {3, 4, 5, 4, 3}, {4, 3, 4, 5, 4}, {5, 5, 4, 4, 3}};
-        List<ColaboradorModel> respondentes = List.of(marina, pedro, joana, lucas, beatriz);
         List<RespostaModel> respostas = new ArrayList<>();
         for (int i = 0; i < respondentes.size(); i++) {
             ParticipacaoClimaModel part = new ParticipacaoClimaModel();
             part.setPesquisa(pesquisa);
             part.setColaborador(respondentes.get(i));
-            part.setDataParticipacao(hoje.minusDays(5));
+            part.setDataParticipacao(inicio.plusDays(1));
             participacaoRepository.save(part);
             for (int j = 0; j < perguntas.size(); j++) {
                 RespostaModel r = new RespostaModel();
                 r.setPergunta(perguntas.get(j));
-                r.setSetor(ti.getNome());
+                r.setSetor(respondentes.get(i).getDepartamento().getNome());
                 if (perguntas.get(j).getTipo() == TipoPergunta.ESCALA) {
                     r.setValor(valores[i][j % 5]);
                 }
