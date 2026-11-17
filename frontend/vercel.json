@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:caminho*", "destination": "https://SEU-BACKEND.onrender.com/api/:caminho*" },
+    { "source": "/api/:caminho*", "destination": "https://sistema-planilhas-najb.onrender.com/api/:caminho*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
