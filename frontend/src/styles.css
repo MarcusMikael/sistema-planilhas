@@ -1441,9 +1441,44 @@ td.acoes {
   color: var(--texto-2);
 }
 
-.contas-demo button {
+.contas-demo {
+  border-top: 1px solid var(--borda);
+  padding-top: 12px;
+}
+
+.contas-demo p {
+  margin: 0 0 8px;
+}
+
+.contas-demo-grade {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.contas-demo-grade button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 6px 8px;
   font-size: 0.75rem;
-  padding: 3px 8px;
+  text-align: left;
+}
+
+.contas-demo-grade button strong {
+  font-size: 0.8125rem;
+  color: var(--texto);
+}
+
+.contas-demo-grade button span {
+  color: var(--texto-2);
+}
+
+@media (max-width: 420px) {
+  .contas-demo-grade {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ---------- Modal: gaveta lateral ---------- */

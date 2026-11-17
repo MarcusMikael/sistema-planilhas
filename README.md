@@ -181,39 +181,49 @@ cd frontend && npm run build                 # gera frontend/dist (arquivos est�
 ## Contas de demonstração
 
 Criadas automaticamente quando o banco está vazio (perfil `dev`, ou `SDPP_SEED_DEMO=true` em produção). Todos
-os dados são **fictícios** (restrição RES-02 do DRS). **Senha de todas as contas: `sdpp123`.**
+os dados são **fictícios** (restrição RES-02 do DRS). **Senha de todas as contas: `sdpp123`.** Na tela de login,
+os botões dos personagens entram com um clique.
 
-| Perfil | E-mail | Quem é |
+Os dados contam uma pequena história, a da equipe de Tecnologia de uma empresa fictícia, para que qualquer pessoa
+consiga apresentar o sistema:
+
+| Personagem | E-mail | Papel na história |
 |---|---|---|
-| RH | `rh@sdpp.local` | Ana Souza – gestora do Carlos e da Fernanda |
-| Gestor | `gestor@sdpp.local` | Carlos Lima – equipe de Tecnologia (Marina, Pedro, Joana, Lucas e Beatriz) |
-| Gestor | `gestora.comercial@sdpp.local` | Fernanda Costa – equipe Comercial (Rafael) |
-| Colaborador | `marina@sdpp.local` | Marina Oliveira – resultados do ciclo 2025/2: gestor 4,1 × autoavaliação 3,9 |
-| Colaborador | `joana@sdpp.local` | Joana D'Ávila – tem um PDI com ações |
-| Colaborador | `pedro@sdpp.local`, `lucas@sdpp.local`, `beatriz@sdpp.local`, `rafael@sdpp.local` | demais colaboradores |
+| **Ana Souza** (RH) | `rh@sdpp.local` | Conduz os ciclos de avaliação e a pesquisa de clima e acompanha os indicadores da empresa |
+| **Carlos Lima** (Gestor) | `gestor@sdpp.local` | Gerencia a equipe de Tecnologia: avalia, posiciona na Nine Box e acompanha os PDIs |
+| **Maria Oliveira** | `maria@sdpp.local` | Destaque da equipe: *Alto potencial* na Nine Box, com PDI para assumir a liderança técnica |
+| **Pedro Santos** | `pedro@sdpp.local` | Sólido e constante: *Forte desempenho*; gestor 4,1 × autoavaliação 3,9 (caso de referência do DRS) |
+| **João Pereira** | `joao@sdpp.local` | Tem potencial, mas não está entregando: *Enigma*; PDI em andamento com uma ação atrasada |
+| **Beatriz Alves** | `beatriz@sdpp.local` | Recém-chegada: ainda sem Nine Box e com a autoavaliação do ciclo atual pendente |
+| Fernanda Costa (Gestora) | `gestora.comercial@sdpp.local` | Equipe Comercial; mostra que um gestor não vê a equipe de outro |
+| Rafael Mendes | `rafael@sdpp.local` | Único colaborador do Comercial (equipe da Fernanda) |
 
 > **Contas de demonstração em sites publicados.** Na versão publicada pela equipe fundadora, elas ficaram ativas
 > **de propósito**, para apresentar o sistema. Como a senha é pública, quem publicar uma versão deve decidir se
-> quer mantê-las: para uso real, troque as senhas (ou desative as contas) em *Usuários e acessos* e defina
-> `SDPP_SEED_DEMO=false` no servidor.
+> quer mantê-las: para uso real, troque as senhas (ou desative as contas) em *Usuários e acessos*, defina
+> `SDPP_SEED_DEMO=false` no servidor e `VITE_OCULTAR_CONTAS_DEMO=true` no frontend (esconde os atalhos do login).
 
-Dados já carregados:
+Situação montada (os nomes de ciclos e pesquisas seguem o semestre em que o banco foi criado, por exemplo
+*Ciclo 2026/2*):
 
 - catálogo de 20 competências e os 9 quadrantes da Nine Box, conforme as planilhas;
-- **Ciclo 2025/2**, com resultados liberados e Nine Box parcialmente preenchida;
-- **Ciclo 2026/1**, aberto para avaliações;
-- um PDI;
-- a **Pesquisa de Clima 2026**, publicada e já com 5 respostas;
-- a **Pesquisa de Clima 2025**, encerrada, para ver os resultados agregados (o Comercial, com uma só resposta,
-  aparece agrupado com Tecnologia).
+- **ciclo do semestre passado**, com resultados liberados: gráficos, mapa de competências e Nine Box preenchida
+  (só a Beatriz pendente);
+- **ciclo do semestre atual**, aberto: Maria e Pedro já se autoavaliaram; João e Beatriz ainda não; todas as
+  avaliações do Carlos estão pendentes;
+- **PDIs** da Maria (em dia) e do João (com uma ação atrasada);
+- **pesquisa de clima do semestre atual**, aberta, já respondida por Pedro, João e Rafael (Maria, Beatriz e
+  Carlos podem responder);
+- **pesquisa de clima do semestre passado**, encerrada, com resultados agregados (Tecnologia e Comercial, abaixo
+  do mínimo de 5 respostas cada, aparecem reunidos em um só grupo).
 
 **Sugestão de roteiro para conhecer o sistema:**
 
-1. Entre como **colaborador** (`marina@sdpp.local`) e faça a autoavaliação em *Minha autoavaliação*.
-2. Entre como **gestor** (`gestor@sdpp.local`), avalie a equipe em *Avaliações* e veja a *Matriz Nine Box*.
-3. Entre como **RH** (`rh@sdpp.local`), abra o *Ciclo 2026/1* em *Ciclos de avaliação* e clique em
-   *Liberar resultados*.
-4. Volte como colaborador e veja *Meus resultados*.
+1. Entre como **Beatriz** e faça a autoavaliação em *Minha autoavaliação*.
+2. Entre como **Carlos**, avalie a equipe em *Avaliações* e veja a *Matriz Nine Box* e o PDI do João.
+3. Entre como **Ana**, veja os indicadores e os resultados da pesquisa encerrada; em *Ciclos de avaliação*, abra
+   o ciclo atual e clique em *Liberar resultados*.
+4. Volte como **Maria** e veja *Meus resultados*.
 
 ---
 
