@@ -40,6 +40,7 @@ mais antiga, e acompanha cada cópia do projeto.
 | Rodolfo Dheymison Ferreira Silva | _a preencher_ |
 | João William Soares Teodomiro Setubal de Carvalho | _a preencher_ |
 | Enzo Morais Gonçalves | _a preencher_ |
+| Marcus Mikael Rodrigues Vieira | [@MarcusMikael](https://github.com/MarcusMikael) |
 
 **Entregas do período:**
 
