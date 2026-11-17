@@ -491,7 +491,7 @@ Os pontos em aberto (PA) do DRS que ainda não tinham definição foram resolvid
 
 ## Equipe
 
-Equipe responsável por esta versão. Os contatos (GitHub e LinkedIn) e o histórico de todas as equipes que
+Equipe responsável por esta versão. Os perfis no GitHub e o histórico de todas as equipes que
 trabalharam no projeto ficam em [EQUIPES.md](EQUIPES.md).
 
 | Campo | Informação |
@@ -521,7 +521,7 @@ Para as próximas turmas que vão partir deste código:
 1. **Copie o repositório.** Prefira o botão *Fork* do GitHub, que mantém o vínculo com o original. Se clonar e
    criar um repositório novo, registre o repositório de origem no campo **Partiu de** do `EQUIPES.md`.
 2. **Registre a sua equipe** no topo de [EQUIPES.md](EQUIPES.md) (há um modelo no fim do arquivo), sem remover
-   as anteriores, com os contatos de cada integrante. Depois, atualize a seção [Equipe](#equipe) acima com
+   as anteriores, com o GitHub de cada integrante. Depois, atualize a seção [Equipe](#equipe) acima com
    período letivo, turma, disciplina, orientação e os nomes dos integrantes.
 3. **Rode o projeto localmente** seguindo [Como executar](#como-executar) e confira os testes
    ([Testes e integração contínua](#testes-e-integração-contínua)): o CI passa a rodar no seu repositório.

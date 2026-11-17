@@ -31,15 +31,15 @@ mais antiga, e acompanha cada cópia do projeto.
 | **Partiu de** | — (versão inicial) |
 | **Sistema publicado** | https://sdpp-frontend-eta.vercel.app |
 
-| Integrante | GitHub | LinkedIn |
-|---|---|---|
-| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) | [in/Neeveszr](https://www.linkedin.com/in/Neeveszr) |
-| Marcos André dos Santos Soares | _a preencher_ | _a preencher_ |
-| Carlos Arthur Moraes Gonçalves | _a preencher_ | _a preencher_ |
-| João Pedro Lima Barbosa | _a preencher_ | _a preencher_ |
-| Rodolfo Dheymison Ferreira Silva | _a preencher_ | _a preencher_ |
-| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ | _a preencher_ |
-| Enzo Morais Gonçalves | _a preencher_ | _a preencher_ |
+| Integrante | GitHub |
+|---|---|
+| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) |
+| Marcos André dos Santos Soares | _a preencher_ |
+| Carlos Arthur Moraes Gonçalves | _a preencher_ |
+| João Pedro Lima Barbosa | _a preencher_ |
+| Rodolfo Dheymison Ferreira Silva | _a preencher_ |
+| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ |
+| Enzo Morais Gonçalves | _a preencher_ |
 
 **Entregas do período:**
 
@@ -71,9 +71,9 @@ Copie a partir da linha `### …` e cole no topo da lista de equipes.
 | **Partiu de** | Repositório da equipe anterior (de onde foi feito o fork ou clone) |
 | **Sistema publicado** | URL, se houver |
 
-| Integrante | GitHub | LinkedIn |
-|---|---|---|
-| Nome do integrante | [@usuario](https://github.com/usuario) | [in/usuario](https://www.linkedin.com/in/usuario) |
+| Integrante | GitHub |
+|---|---|
+| Nome do integrante | [@usuario](https://github.com/usuario) |
 
 **Entregas do período:**
 
