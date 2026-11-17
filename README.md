@@ -4,9 +4,10 @@
 
 **Acesse o sistema:** https://sdpp-frontend-eta.vercel.app (contas em [Contas de demonstração](#contas-de-demonstração))
 
-Projeto da disciplina **Gestão de Pessoas** (Engenharia de Software – UNIFSA, 2026), orientado pelo
-professor Aluysio Fonseca. Segue o **Documento de Requisitos de Software (DRS v0.2)** e o **Documento de
-Arquitetura (SWEBOK)** da equipe.
+Criado em 2026.2 na disciplina **Liderança e Gestão de Pessoas** (Engenharia de Software – UNIFSA), sob
+orientação do prof. Aluysio Ricardo Nunes Fonseca, seguindo o **Documento de Requisitos de Software (DRS v0.2)**
+e o **Documento de Arquitetura (SWEBOK)** da equipe fundadora. A equipe atual está em [Equipe](#equipe), e o
+histórico de todas as equipes, em [EQUIPES.md](EQUIPES.md).
 
 ## Sumário
 
@@ -191,9 +192,10 @@ os dados são **fictícios** (restrição RES-02 do DRS). **Senha de todas as co
 | Colaborador | `joana@sdpp.local` | Joana D'Ávila – tem um PDI com ações |
 | Colaborador | `pedro@sdpp.local`, `lucas@sdpp.local`, `beatriz@sdpp.local`, `rafael@sdpp.local` | demais colaboradores |
 
-> **Contas de demonstração no site publicado.** Estão ativas em produção **de propósito**, para a apresentação.
-> Como a senha é pública, depois da apresentação troque as senhas (ou desative as contas) em *Usuários e
-> acessos* e defina `SDPP_SEED_DEMO=false` no Render.
+> **Contas de demonstração em sites publicados.** Na versão publicada pela equipe fundadora, elas ficaram ativas
+> **de propósito**, para apresentar o sistema. Como a senha é pública, quem publicar uma versão deve decidir se
+> quer mantê-las: para uso real, troque as senhas (ou desative as contas) em *Usuários e acessos* e defina
+> `SDPP_SEED_DEMO=false` no servidor.
 
 Dados já carregados:
 
@@ -319,7 +321,7 @@ frontend envia sempre e um site de terceiros não consegue enviar.
   qualquer conta) bloqueiam novos navegadores, contra quem testa uma senha comum em muitas contas;
 - o navegador onde a pessoa já entrou recebe um cookie de dispositivo assinado (`sdpp_dispositivo`, 180 dias)
   e tem contador próprio: alguém errando a senha de propósito em outro lugar não bloqueia o dono da conta.
-  **Dica para a apresentação:** entre uma vez com cada conta no computador que será usado, antes de começar.
+  **Dica para apresentações:** entre uma vez com cada conta no computador que será usado, antes de começar.
 
 **Senhas.** BCrypt; senhas novas precisam de ao menos 8 caracteres, com letras e números (as contas de
 demonstração mantêm `sdpp123`, pois são criadas direto no banco).
@@ -489,28 +491,26 @@ Os pontos em aberto (PA) do DRS que ainda não tinham definição foram resolvid
 
 ## Equipe
 
-Equipe responsável por esta versão. O histórico de todas as equipes que trabalharam no projeto fica em
-[EQUIPES.md](EQUIPES.md).
+Equipe responsável por esta versão. Os contatos (GitHub e LinkedIn) e o histórico de todas as equipes que
+trabalharam no projeto ficam em [EQUIPES.md](EQUIPES.md).
 
 | Campo | Informação |
 |---|---|
 | **Período letivo** | 2026.2 |
-| **Turma** | 6º período |
-| **Disciplina** | Gestão de Pessoas |
+| **Turma** | 6º período, turno manhã |
+| **Disciplina** | Liderança e Gestão de Pessoas |
 | **Curso e instituição** | Engenharia de Software – UNIFSA |
-| **Orientação** | Prof. Aluysio Fonseca |
+| **Orientação** | Prof. Aluysio Ricardo Nunes Fonseca |
 
-<!-- Para completar: substitua "_a preencher_" pelos links de cada integrante, nos formatos [@usuario](https://github.com/usuario) e [in/usuario](https://www.linkedin.com/in/usuario). -->
-
-| Integrante | GitHub | LinkedIn |
-|---|---|---|
-| Antonio Neves Aguiar Neto | [@Neeveszr](https://github.com/Neeveszr) | [in/Neeveszr](https://www.linkedin.com/in/Neeveszr) |
-| Marcos André dos Santos Soares | _a preencher_ | _a preencher_ |
-| Carlos Arthur Moraes Gonçalves | _a preencher_ | _a preencher_ |
-| João Pedro Lima Barbosa | _a preencher_ | _a preencher_ |
-| Rodolfo Dheymison Ferreira Silva | _a preencher_ | _a preencher_ |
-| João William Soares Teodomiro Setubal de Carvalho | _a preencher_ | _a preencher_ |
-| Enzo Morais Gonçalves | _a preencher_ | _a preencher_ |
+| Integrante |
+|---|
+| Antonio Neves Aguiar Neto |
+| Marcos André dos Santos Soares |
+| Carlos Arthur Moraes Gonçalves |
+| João Pedro Lima Barbosa |
+| Rodolfo Dheymison Ferreira Silva |
+| João William Soares Teodomiro Setubal de Carvalho |
+| Enzo Morais Gonçalves |
 
 ---
 
@@ -519,18 +519,22 @@ Equipe responsável por esta versão. O histórico de todas as equipes que traba
 Para as próximas turmas que vão partir deste código:
 
 1. **Copie o repositório.** Prefira o botão *Fork* do GitHub, que mantém o vínculo com o original. Se clonar e
-   criar um repositório novo, cite o projeto de origem no README: https://github.com/MarcusMikael/sistema-planilhas.
+   criar um repositório novo, registre o repositório de origem no campo **Partiu de** do `EQUIPES.md`.
 2. **Registre a sua equipe** no topo de [EQUIPES.md](EQUIPES.md) (há um modelo no fim do arquivo), sem remover
-   as anteriores, e atualize a seção [Equipe](#equipe) acima com período letivo, turma, disciplina, orientação e
-   integrantes.
+   as anteriores, com os contatos de cada integrante. Depois, atualize a seção [Equipe](#equipe) acima com
+   período letivo, turma, disciplina, orientação e os nomes dos integrantes.
 3. **Rode o projeto localmente** seguindo [Como executar](#como-executar) e confira os testes
    ([Testes e integração contínua](#testes-e-integração-contínua)): o CI passa a rodar no seu repositório.
 4. **Publique a sua versão**, se for o caso, com novas contas na Vercel e no Render ([Deploy](#deploy)):
    - troque o endereço do backend no proxy `/api` do `frontend/vercel.json`;
    - gere um `SDPP_JWT_SECRET` novo e use um banco PostgreSQL próprio;
+   - decida se mantém as [contas de demonstração](#contas-de-demonstração) (`SDPP_SEED_DEMO`); com a senha
+     pública, só faz sentido para apresentar o sistema;
    - atualize os links do sistema publicado e do selo do CI no topo deste README.
 5. **Revise os pontos em aberto** ([Decisões sobre pontos em aberto](#decisões-sobre-pontos-em-aberto)) com a
    orientação do seu período antes de mudar regras.
+6. **Mantenha a documentação em dia:** se o visual mudar, refaça as capturas em `docs/imagens/` (seção
+   [Telas](#telas)), e registre no `EQUIPES.md` as entregas do seu período.
 
 ---
 
