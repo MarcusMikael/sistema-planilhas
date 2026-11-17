@@ -138,11 +138,6 @@ p {
   transition: transform 0.2s ease-out, visibility 0s, box-shadow 0.2s;
 }
 
-/* A marca aparece no cabeçalho; no menu fica oculta */
-.lateral>.marca {
-  display: none;
-}
-
 .marca-logo {
   width: 28px;
   height: 28px;
@@ -156,7 +151,7 @@ p {
 }
 
 /* Grupos */
-.lateral>div:not(.marca):not(.lateral-rodape) {
+.lateral>div {
   padding: 8px 12px 4px;
 }
 
@@ -251,44 +246,6 @@ p {
   margin-top: 6px;
 }
 
-/* Rodapé: usuário e sair */
-.lateral>.lateral-rodape {
-  position: sticky;
-  bottom: 0;
-  margin: auto 0 0;
-  padding: 14px 16px 16px;
-  background: var(--superficie);
-  border-top: 1px solid var(--borda);
-  display: grid;
-  gap: 2px;
-  font-size: 0.75rem;
-  color: var(--texto-2);
-}
-
-.lateral-rodape strong {
-  display: block;
-  color: var(--texto);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.lateral-rodape span {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--texto-2);
-}
-
-.lateral-rodape>div {
-  display: block;
-  margin-top: 10px;
-}
-
-.lateral-rodape button {
-  width: 100%;
-  justify-content: center;
-  margin: 0;
-}
-
 .conteudo {
   padding: 40px 44px 72px;
   min-width: 0;
@@ -297,13 +254,13 @@ p {
   margin: 0 auto;
 }
 
-/* Cabeçalho */
+/* ---------- Cabeçalho ---------- */
 .topo-movel {
   display: flex;
   align-items: center;
   gap: 12px;
   height: var(--topo);
-  padding: 0 24px;
+  padding: 0 20px;
   background: var(--superficie);
   color: var(--texto);
   position: sticky;
@@ -312,45 +269,271 @@ p {
   border-bottom: 1px solid var(--borda);
 }
 
-.topo-movel strong {
+.topo-movel .espaco {
+  flex: 1;
+}
+
+.btn-menu {
+  padding: 6px 8px;
+  line-height: 1;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--texto);
+  flex: none;
+}
+
+.marca:hover {
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.marca strong {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
-.topo-movel button {
-  padding: 6px 10px;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.topo-movel .espaco {
-  flex: 1;
-}
-
-/* Badge de contexto do perfil */
-.perfil-badge {
-  display: inline-flex;
+/* Trilha: Grupo › Página */
+.trilha {
+  display: flex;
   align-items: center;
-  padding: 2px 10px;
-  border: 1px solid currentColor;
-  border-radius: 99px;
-  background: var(--superficie);
-  font-size: 0.75rem;
-  font-weight: 500;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--texto-suave);
   white-space: nowrap;
 }
 
-.perfil-COLABORADOR {
-  color: var(--perfil-colaborador);
+.trilha-divisor {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px 0 2px;
+  background: var(--borda);
 }
 
-.perfil-GESTOR {
-  color: var(--perfil-gestor);
+.trilha a {
+  color: var(--texto-2);
 }
 
-.perfil-RH {
-  color: var(--perfil-rh);
+.trilha-atual {
+  color: var(--texto);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ciclo aberto e prazo */
+.chip-ciclo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 99px;
+  background: var(--fundo);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--texto-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botões do cabeçalho (sino e usuário) */
+.btn-cabecalho {
+  border-color: transparent;
+  background: none;
+  padding: 6px;
+  color: var(--texto-2);
+}
+
+.btn-cabecalho:hover,
+.btn-cabecalho[aria-expanded='true'] {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.sino {
+  position: relative;
+}
+
+.sino-contador {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 99px;
+  border: 2px solid var(--superficie);
+  background: var(--erro);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.usuario {
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px var(--superficie), 0 0 0 4px currentColor;
+  flex: none;
+}
+
+.avatar.perfil-COLABORADOR {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.avatar.perfil-GESTOR {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.avatar.perfil-RH {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.usuario-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+  margin-left: 4px;
+}
+
+.usuario-nome {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--texto);
+}
+
+.usuario-perfil {
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.usuario-perfil.perfil-COLABORADOR {
+  color: #047857;
+}
+
+.usuario-perfil.perfil-GESTOR {
+  color: #0369a1;
+}
+
+.usuario-perfil.perfil-RH {
+  color: #4338ca;
+}
+
+/* Menus suspensos do cabeçalho */
+.suspenso {
+  position: relative;
+}
+
+.suspenso-painel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 60;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  animation: surgir 0.15s ease-out;
+}
+
+.painel-usuario {
+  width: 240px;
+}
+
+.suspenso-titulo {
+  padding: 8px 10px 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--texto-suave);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suspenso-vazio {
+  padding: 4px 10px 10px;
+  margin: 0;
+}
+
+.suspenso-painel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.suspenso-painel li a,
+.suspenso-painel li button {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--raio-controle);
+  background: none;
+  color: var(--texto);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-align: left;
+}
+
+.suspenso-painel li a:hover,
+.suspenso-painel li button:hover {
+  background: var(--superficie-2);
+  text-decoration: none;
+}
+
+.suspenso-painel li svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--texto-suave);
+}
+
+.suspenso-painel small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+@media (max-width: 900px) {
+  .trilha,
+  .chip-ciclo-texto,
+  .usuario-texto {
+    display: none;
+  }
+
+  .chip-ciclo {
+    padding: 6px;
+  }
+
+  .topo-movel {
+    gap: 6px;
+    padding: 0 12px;
+  }
 }
 
 .pagina {
