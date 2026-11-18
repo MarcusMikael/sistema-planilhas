@@ -1373,112 +1373,255 @@ td.acoes {
   background: var(--fundo);
 }
 
+/* Painel de apresentação: verde da marca com texto branco */
 .login-lado {
   order: 2;
-  background: var(--superficie);
-  border-left: 1px solid var(--borda);
-  padding: 64px;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(255, 255, 255, 0.1), transparent 45%),
+    radial-gradient(circle at 10% 95%, rgba(15, 118, 110, 0.6), transparent 50%),
+    linear-gradient(150deg, #065f46 0%, #047857 55%, #0f766e 100%);
+  padding: 40px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-marca strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.login-marca .marca-logo {
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  color: var(--primaria-escura);
+}
+
+.login-lado-conteudo {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 20px;
-}
-
-.login-lado h1 {
-  font-size: 1.75rem;
   max-width: 560px;
 }
 
+.login-lado h1 {
+  font-size: 2rem;
+  color: #fff;
+  letter-spacing: -0.025em;
+}
+
 .login-lado p {
-  font-size: 1rem;
-  color: var(--texto-2);
-  max-width: 520px;
+  margin: 0;
+  font-size: 1.0625rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .login-lado ul {
   padding-left: 0;
   margin: 0;
-  color: var(--texto-2);
   list-style: none;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .login-lado li {
-  padding-left: 24px;
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.login-lado li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.35em;
-  width: 14px;
-  height: 14px;
+.login-check {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: var(--primaria-clara);
-  box-shadow: inset 0 0 0 4px var(--primaria-clara), inset 0 0 0 10px var(--primaria);
-}
-
-.login-form {
+  background: rgba(255, 255, 255, 0.18);
   display: grid;
   place-items: center;
+  flex: none;
+}
+
+/* Ilustração decorativa da Matriz Nine Box */
+.login-ninebox {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  width: min(240px, 100%);
+}
+
+.login-ninebox-grade {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  aspect-ratio: 1;
+}
+
+.login-ninebox-celula {
+  border-radius: var(--raio-controle);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px;
+}
+
+.login-ninebox-celula.destaque {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.login-ninebox-ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.login-ninebox-eixo {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.login-ninebox-eixo-y {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+}
+
+.login-ninebox-eixo-x {
+  grid-column: 2;
+  text-align: center;
+}
+
+/* Formulário */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
   padding: 32px;
 }
 
 .login-form .cartao {
   width: min(400px, 100%);
-  padding: 28px;
+  padding: 32px 28px 28px;
 }
 
 .login-form .btn-primario {
   justify-content: center;
 }
 
-.contas-demo {
-  font-size: 0.75rem;
+.login-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.login-cabecalho h2 {
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+}
+
+.login-cabecalho p {
+  margin: 0;
   color: var(--texto-2);
 }
 
+.login-rodape {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+  text-align: center;
+}
+
+/* Contas de demonstração com avatar colorido por perfil */
 .contas-demo {
+  font-size: 0.75rem;
+  color: var(--texto-2);
   border-top: 1px solid var(--borda);
-  padding-top: 12px;
+  padding-top: 14px;
 }
 
 .contas-demo p {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 }
 
 .contas-demo-grade {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .contas-demo-grade button {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-  padding: 6px 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
   font-size: 0.75rem;
   text-align: left;
 }
 
-.contas-demo-grade button strong {
+.conta-demo-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.conta-demo-texto strong {
   font-size: 0.8125rem;
   color: var(--texto);
 }
 
-.contas-demo-grade button span {
+.conta-demo-texto span {
   color: var(--texto-2);
 }
 
-@media (max-width: 420px) {
-  .contas-demo-grade {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.avatar-demo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  flex: none;
+}
+
+.avatar-rh {
+  background: var(--info-fundo);
+  color: var(--info-texto);
+}
+
+.avatar-gestor {
+  background: var(--aviso-fundo);
+  color: var(--aviso-texto);
+}
+
+.avatar-colaborador {
+  background: var(--ok-fundo);
+  color: var(--ok-texto);
 }
 
 /* ---------- Modal: gaveta lateral ---------- */
@@ -1816,9 +1959,17 @@ tbody tr:hover td.celula-calor {
 
   .login-lado {
     order: 0;
-    padding: 32px 22px;
-    border-left: 0;
-    border-bottom: 1px solid var(--borda);
+    padding: 28px 22px 32px;
+    gap: 20px;
+  }
+
+  .login-lado h1 {
+    font-size: 1.5rem;
+  }
+
+  .login-ninebox,
+  .login-lado ul {
+    display: none;
   }
 
   .competencia-item {
