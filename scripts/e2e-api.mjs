@@ -61,8 +61,10 @@ check('rafael não vê histórico do Pedro', (await req(T.rafael, 'GET', `/colab
 const catalogo = esperar('catálogo', await req(T.rh, 'GET', '/competencias'), 200);
 const comp = catalogo.filter((c) => c.tipo === 'COMPORTAMENTAL').map((c) => c.id);
 const tec = catalogo.filter((c) => c.tipo === 'TECNICA').map((c) => c.id);
-const hoje = new Date().toISOString().slice(0, 10);
-const fim = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+// Data local (não UTC): à noite no Brasil o UTC já está no dia seguinte e o ciclo "começaria amanhã"
+const dataLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const hoje = dataLocal(new Date());
+const fim = dataLocal(new Date(Date.now() + 30 * 864e5));
 esperar('ciclo com fim < início', await req(T.rh, 'POST', '/ciclos', { nome: 'X', dataInicio: fim, dataFim: hoje }), 422);
 const ciclo = esperar('criar ciclo', await req(T.rh, 'POST', '/ciclos', { nome: 'E2E 2026/2', dataInicio: hoje, dataFim: fim }), 201);
 check('ciclo nasce em rascunho', ciclo.status === 'RASCUNHO');
