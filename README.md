@@ -211,8 +211,8 @@ Situação montada (os nomes de ciclos e pesquisas seguem o semestre em que o ba
 - **ciclo do semestre atual**, aberto: Maria e Pedro já se autoavaliaram; João e Beatriz ainda não; todas as
   avaliações do Carlos estão pendentes;
 - **PDIs** da Maria (em dia) e do João (com uma ação atrasada);
-- **pesquisa de clima do semestre atual**, aberta, já respondida por Pedro, João e Rafael (Maria, Beatriz e
-  Carlos podem responder);
+- **pesquisa de clima do semestre atual**, aberta, já respondida por Pedro, João e Rafael (as demais contas,
+  como Maria, Beatriz e Carlos, ainda podem responder);
 - **pesquisa de clima do semestre passado**, encerrada, com resultados agregados (Tecnologia e Comercial, abaixo
   do mínimo de 5 respostas cada, aparecem reunidos em um só grupo).
 
@@ -267,7 +267,7 @@ flowchart LR
 | Backend | Java 21, Spring Boot 4.1, Spring Security (JWT em cookie HttpOnly + BCrypt), Spring Data JPA / Hibernate, Bean Validation |
 | Banco de dados | H2 em arquivo (desenvolvimento, sem instalação) · PostgreSQL (produção) |
 | Frontend | React 18, React Router 7, Vite 8, ícones Lucide |
-| Testes | JUnit 5, Spring MockMvc, AssertJ · Vitest, Testing Library · ESLint · roteiro ponta a ponta em Node.js |
+| Testes | JUnit 6, Spring MockMvc, AssertJ · Vitest, Testing Library · ESLint · roteiro ponta a ponta em Node.js |
 | Integração e deploy | GitHub Actions · Vercel (frontend) · Render com Docker (backend e PostgreSQL) |
 
 ### Estrutura do repositório
