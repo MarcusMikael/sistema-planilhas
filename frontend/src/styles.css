@@ -1373,39 +1373,15 @@ td.acoes {
   background: var(--fundo);
 }
 
-/* Painel de apresentação: verde da marca com texto branco */
+/* Painel de apresentação: mesma linguagem do sistema (superfície clara, bordas finas, sem sombras) */
 .login-lado {
   order: 2;
-  position: relative;
-  overflow: hidden;
-  color: #fff;
-  background:
-    radial-gradient(circle at 85% 10%, rgba(255, 255, 255, 0.1), transparent 45%),
-    radial-gradient(circle at 10% 95%, rgba(15, 118, 110, 0.6), transparent 50%),
-    linear-gradient(150deg, #065f46 0%, #047857 55%, #0f766e 100%);
+  background: var(--superficie);
+  border-left: 1px solid var(--borda);
   padding: 40px 64px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-}
-
-.login-marca {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.login-marca strong {
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.login-marca .marca-logo {
-  width: 34px;
-  height: 34px;
-  background: #fff;
-  color: var(--primaria-escura);
 }
 
 .login-lado-conteudo {
@@ -1413,104 +1389,59 @@ td.acoes {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
   max-width: 560px;
 }
 
 .login-lado h1 {
-  font-size: 2rem;
-  color: #fff;
+  font-size: 1.75rem;
   letter-spacing: -0.025em;
 }
 
 .login-lado p {
   margin: 0;
-  font-size: 1.0625rem;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  color: var(--texto-2);
 }
 
-.login-lado ul {
-  padding-left: 0;
-  margin: 0;
+.login-modulos {
   list-style: none;
-  display: grid;
-  gap: 12px;
-  color: rgba(255, 255, 255, 0.92);
+  margin: 16px 0 0;
+  padding: 0;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
 }
 
-.login-lado li {
+.login-modulos li {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
 }
 
-.login-check {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+.login-modulos li + li {
+  border-top: 1px solid var(--borda);
+}
+
+.login-modulos strong {
+  display: block;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.login-modulos li span span {
+  color: var(--texto-2);
+}
+
+.login-modulo-icone {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--raio-controle);
+  background: var(--primaria-clara);
+  color: var(--primaria-escura);
   display: grid;
   place-items: center;
   flex: none;
-}
-
-/* Ilustração decorativa da Matriz Nine Box */
-.login-ninebox {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: 1fr auto;
-  gap: 8px;
-  width: min(240px, 100%);
-}
-
-.login-ninebox-grade {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  aspect-ratio: 1;
-}
-
-.login-ninebox-celula {
-  border-radius: var(--raio-controle);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px;
-}
-
-.login-ninebox-celula.destaque {
-  background: rgba(255, 255, 255, 0.26);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.login-ninebox-ponto {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.login-ninebox-eixo {
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.login-ninebox-eixo-y {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-align: center;
-}
-
-.login-ninebox-eixo-x {
-  grid-column: 2;
-  text-align: center;
 }
 
 /* Formulário */
@@ -1959,16 +1890,17 @@ tbody tr:hover td.celula-calor {
 
   .login-lado {
     order: 0;
-    padding: 28px 22px 32px;
+    padding: 24px 22px 28px;
     gap: 20px;
+    border-left: 0;
+    border-bottom: 1px solid var(--borda);
   }
 
   .login-lado h1 {
-    font-size: 1.5rem;
+    font-size: 1.375rem;
   }
 
-  .login-ninebox,
-  .login-lado ul {
+  .login-modulos {
     display: none;
   }
 
