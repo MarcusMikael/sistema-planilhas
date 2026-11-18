@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check, TrendingUp } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { Alerta, Campo } from '../components/ui.jsx';
 import { useTituloAba } from '../hooks.js';
@@ -8,14 +9,41 @@ import { useTituloAba } from '../hooks.js';
 // essas contas no servidor e definir VITE_OCULTAR_CONTAS_DEMO=true para esconder os atalhos.
 const SENHA_DEMO = 'sdpp123';
 const CONTAS_DEMO = [
-  { nome: 'Ana', papel: 'RH', email: 'rh@sdpp.local' },
-  { nome: 'Carlos', papel: 'Gestor', email: 'gestor@sdpp.local' },
-  { nome: 'Maria', papel: 'Destaque', email: 'maria@sdpp.local' },
-  { nome: 'Pedro', papel: 'Constante', email: 'pedro@sdpp.local' },
-  { nome: 'João', papel: 'Com PDI', email: 'joao@sdpp.local' },
-  { nome: 'Beatriz', papel: 'Novata', email: 'beatriz@sdpp.local' },
+  { nome: 'Ana', papel: 'RH', email: 'rh@sdpp.local', perfil: 'rh' },
+  { nome: 'Carlos', papel: 'Gestor', email: 'gestor@sdpp.local', perfil: 'gestor' },
+  { nome: 'Maria', papel: 'Destaque', email: 'maria@sdpp.local', perfil: 'colaborador' },
+  { nome: 'Pedro', papel: 'Constante', email: 'pedro@sdpp.local', perfil: 'colaborador' },
+  { nome: 'João', papel: 'Com PDI', email: 'joao@sdpp.local', perfil: 'colaborador' },
+  { nome: 'Beatriz', papel: 'Novata', email: 'beatriz@sdpp.local', perfil: 'colaborador' },
 ];
 const MOSTRAR_CONTAS_DEMO = import.meta.env.VITE_OCULTAR_CONTAS_DEMO !== 'true';
+
+const RECURSOS = [
+  'Autoavaliação e avaliação do gestor por competências',
+  'Resultados liberados pelo RH e comparação lado a lado',
+  'Planos de desenvolvimento acompanhados pelo gestor',
+  'Pesquisa de clima com respostas anônimas',
+];
+
+// Ilustração decorativa da Matriz Nine Box: quantas "pessoas" aparecem em cada quadrante
+// (linhas de cima para baixo = potencial alto → baixo; colunas = desempenho baixo → alto).
+const NINE_BOX = [1, 2, 3, 1, 3, 2, 0, 1, 1];
+
+function IlustracaoNineBox() {
+  return (
+    <div className="login-ninebox" aria-hidden="true">
+      <span className="login-ninebox-eixo login-ninebox-eixo-y">Potencial</span>
+      <div className="login-ninebox-grade">
+        {NINE_BOX.map((qtd, i) => (
+          <div key={i} className={`login-ninebox-celula${i === 2 ? ' destaque' : ''}`}>
+            {Array.from({ length: qtd }, (_, j) => <span key={j} className="login-ninebox-ponto" />)}
+          </div>
+        ))}
+      </div>
+      <span className="login-ninebox-eixo login-ninebox-eixo-x">Desempenho</span>
+    </div>
+  );
+}
 
 export default function Login() {
   useTituloAba('Entrar');
@@ -45,19 +73,28 @@ export default function Login() {
   return (
     <div className="login">
       <div className="login-lado">
-        <h1>Sistema de Desenvolvimento e Performance de Pessoas</h1>
-        <p>Avaliação de desempenho, Matriz Nine Box, PDI e pesquisa de clima em um só lugar.</p>
-        <ul>
-          <li>Autoavaliação e avaliação do gestor por competências</li>
-          <li>Resultados liberados pelo RH e comparação lado a lado</li>
-          <li>Planos de desenvolvimento acompanhados pelo gestor</li>
-          <li>Pesquisa de clima com respostas anônimas</li>
-        </ul>
+        <div className="login-marca">
+          <span className="marca-logo" aria-hidden="true"><TrendingUp size={18} strokeWidth={1.75} /></span>
+          <strong>SDPP</strong>
+        </div>
+        <div className="login-lado-conteudo">
+          <h1>Sistema de Desenvolvimento e Performance de Pessoas</h1>
+          <p>Avaliação de desempenho, Matriz Nine Box, PDI e pesquisa de clima em um só lugar.</p>
+          <ul>
+            {RECURSOS.map((r) => (
+              <li key={r}><span className="login-check" aria-hidden="true"><Check size={13} strokeWidth={2.5} /></span>{r}</li>
+            ))}
+          </ul>
+          <IlustracaoNineBox />
+        </div>
       </div>
       <div className="login-form">
         <div className="cartao">
           <form className="form" onSubmit={enviar}>
-            <h2>Entrar</h2>
+            <div className="login-cabecalho">
+              <h2>Acesse sua conta</h2>
+              <p>Use seu e-mail e senha para entrar.</p>
+            </div>
             <Alerta erro={erro} />
             <Campo rotulo="E-mail">
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus
@@ -78,8 +115,11 @@ export default function Login() {
                     <button type="button" key={c.email} disabled={enviando}
                       aria-label={`Entrar como ${c.nome} (${c.papel})`}
                       onClick={() => entrarCom(c.email, SENHA_DEMO)}>
-                      <strong>{c.nome}</strong>
-                      <span>{c.papel}</span>
+                      <span className={`avatar-demo avatar-${c.perfil}`} aria-hidden="true">{c.nome[0]}</span>
+                      <span className="conta-demo-texto">
+                        <strong>{c.nome}</strong>
+                        <span>{c.papel}</span>
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -87,6 +127,7 @@ export default function Login() {
             )}
           </form>
         </div>
+        <p className="login-rodape">Projeto acadêmico · Liderança e Gestão de Pessoas · UNIFSA 2026.2</p>
       </div>
     </div>
   );
