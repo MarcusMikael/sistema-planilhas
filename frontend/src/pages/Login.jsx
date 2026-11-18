@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, TrendingUp } from 'lucide-react';
+import { ClipboardCheck, LayoutGrid, MessageSquareHeart, Sprout, TrendingUp } from 'lucide-react';
 import { useAuth } from '../auth.jsx';
 import { Alerta, Campo } from '../components/ui.jsx';
 import { useTituloAba } from '../hooks.js';
@@ -18,32 +18,13 @@ const CONTAS_DEMO = [
 ];
 const MOSTRAR_CONTAS_DEMO = import.meta.env.VITE_OCULTAR_CONTAS_DEMO !== 'true';
 
-const RECURSOS = [
-  'Autoavaliação e avaliação do gestor por competências',
-  'Resultados liberados pelo RH e comparação lado a lado',
-  'Planos de desenvolvimento acompanhados pelo gestor',
-  'Pesquisa de clima com respostas anônimas',
+// Módulos do sistema, com os mesmos ícones do menu lateral
+const MODULOS = [
+  { Icone: ClipboardCheck, titulo: 'Avaliação de desempenho', texto: 'Autoavaliação e avaliação do gestor por competências.' },
+  { Icone: LayoutGrid, titulo: 'Matriz Nine Box', texto: 'Desempenho e potencial de cada pessoa em uma matriz 3×3.' },
+  { Icone: Sprout, titulo: 'Plano de desenvolvimento', texto: 'Ações com prazo, acompanhadas pelo gestor.' },
+  { Icone: MessageSquareHeart, titulo: 'Pesquisa de clima', texto: 'Respostas anônimas, resultados por setor.' },
 ];
-
-// Ilustração decorativa da Matriz Nine Box: quantas "pessoas" aparecem em cada quadrante
-// (linhas de cima para baixo = potencial alto → baixo; colunas = desempenho baixo → alto).
-const NINE_BOX = [1, 2, 3, 1, 3, 2, 0, 1, 1];
-
-function IlustracaoNineBox() {
-  return (
-    <div className="login-ninebox" aria-hidden="true">
-      <span className="login-ninebox-eixo login-ninebox-eixo-y">Potencial</span>
-      <div className="login-ninebox-grade">
-        {NINE_BOX.map((qtd, i) => (
-          <div key={i} className={`login-ninebox-celula${i === 2 ? ' destaque' : ''}`}>
-            {Array.from({ length: qtd }, (_, j) => <span key={j} className="login-ninebox-ponto" />)}
-          </div>
-        ))}
-      </div>
-      <span className="login-ninebox-eixo login-ninebox-eixo-x">Desempenho</span>
-    </div>
-  );
-}
 
 export default function Login() {
   useTituloAba('Entrar');
@@ -73,19 +54,24 @@ export default function Login() {
   return (
     <div className="login">
       <div className="login-lado">
-        <div className="login-marca">
-          <span className="marca-logo" aria-hidden="true"><TrendingUp size={18} strokeWidth={1.75} /></span>
+        <div className="marca">
+          <span className="marca-logo" aria-hidden="true"><TrendingUp size={17} strokeWidth={1.5} /></span>
           <strong>SDPP</strong>
         </div>
         <div className="login-lado-conteudo">
           <h1>Sistema de Desenvolvimento e Performance de Pessoas</h1>
           <p>Avaliação de desempenho, Matriz Nine Box, PDI e pesquisa de clima em um só lugar.</p>
-          <ul>
-            {RECURSOS.map((r) => (
-              <li key={r}><span className="login-check" aria-hidden="true"><Check size={13} strokeWidth={2.5} /></span>{r}</li>
+          <ul className="login-modulos">
+            {MODULOS.map(({ Icone, titulo, texto }) => (
+              <li key={titulo}>
+                <span className="login-modulo-icone" aria-hidden="true"><Icone size={18} strokeWidth={1.5} /></span>
+                <span>
+                  <strong>{titulo}</strong>
+                  <span>{texto}</span>
+                </span>
+              </li>
             ))}
           </ul>
-          <IlustracaoNineBox />
         </div>
       </div>
       <div className="login-form">
